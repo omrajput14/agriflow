@@ -119,3 +119,18 @@ def create_harvest_lot(lot: schemas.HarvestLotCreate, db: Session = Depends(get_
     db.commit()
     db.refresh(new_lot)
     return new_lot
+
+from pydantic import BaseModel
+class StatusUpdate(BaseModel):
+    status: str
+
+@app.patch("/api/harvest-lots/{lot_id}/status", response_model=schemas.HarvestLot)
+def update_harvest_lot_status(lot_id: str, status_update: StatusUpdate, db: Session = Depends(get_db)):
+    db_lot = db.query(models.HarvestLot).filter(models.HarvestLot.id == lot_id).first()
+    if not db_lot:
+        raise HTTPException(status_code=404, detail="Lot not found")
+    
+    db_lot.status = status_update.status
+    db.commit()
+    db.refresh(db_lot)
+    return db_lot

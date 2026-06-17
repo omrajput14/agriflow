@@ -1,29 +1,40 @@
 import React, { useState, useEffect } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
 import { useNavigate } from 'react-router-dom';
-import { Tractor, Package, Ship, Filter, Download, ArrowUpRight, ArrowDownRight, ChevronRight, HardDrive, Plus, X, Loader2 } from 'lucide-react';
-import { createShipment, getBuyers } from '../services/api';
+import { Truck, Thermometer, Anchor, Package, Users, Settings, AlertCircle, ChevronRight, Activity, Search, ShieldCheck, FileText, Download, Plus, Tractor, HardDrive, Ship, ArrowUpRight, ArrowDownRight, X, Loader2, Filter } from 'lucide-react';
+import { getFarms, getHarvestLots, getShipments, createShipment, getBuyers } from '../services/api';
 
 export default function Dashboard() {
   const navigate = useNavigate();
   const [isModalOpen, setIsModalOpen] = useState(false);
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [buyers, setBuyers] = useState<any[]>([]);
+  const [farms, setFarms] = useState<any[]>([]);
+  const [lots, setLots] = useState<any[]>([]);
+  const [shipments, setShipments] = useState<any[]>([]);
 
   const [formData, setFormData] = useState({
     id: '', buyer_id: '', container_number: '', status: 'Planned'
   });
 
   useEffect(() => {
-    const fetchBuyers = async () => {
+    const fetchData = async () => {
       try {
-        const data = await getBuyers();
-        setBuyers(data);
+        const [b, f, l, s] = await Promise.all([
+          getBuyers(),
+          getFarms(),
+          getHarvestLots(),
+          getShipments()
+        ]);
+        setBuyers(b);
+        setFarms(f);
+        setLots(l);
+        setShipments(s);
       } catch (error) {
-        console.error("Failed to load buyers", error);
+        console.error("Failed to fetch dashboard data", error);
       }
     };
-    fetchBuyers();
+    fetchData();
   }, []);
 
   const handleCreateSubmit = async (e: React.FormEvent) => {
@@ -61,11 +72,11 @@ export default function Dashboard() {
           <p className="text-[13px] text-slate-500 mt-0.5">Real-time supply chain telemetry and export tracking.</p>
         </div>
         <div className="flex items-center gap-2">
-          <button onClick={() => alert("Report generation feature coming soon!")} className="flex items-center gap-1.5 px-3 py-1.5 text-[13px] font-medium text-slate-700 bg-white border border-slate-300 rounded-md hover:bg-slate-50 transition-colors shadow-sm">
-            <Download size={14} />
+          <button onClick={() => navigate('/export-report')} className="flex items-center gap-1.5 px-3 py-1.5 text-[13px] font-medium text-slate-700 bg-white border border-slate-300 rounded-md hover:bg-slate-50 transition-colors shadow-sm">
+            <Download size={16} />
             Export Report
           </button>
-          <button onClick={() => setIsModalOpen(true)} className="flex items-center gap-1.5 px-3 py-1.5 text-[13px] font-medium text-white bg-accent border border-transparent rounded-md hover:bg-blue-700 transition-colors shadow-sm">
+          <button onClick={() => setIsModalOpen(true)} className="flex items-center gap-1.5 px-3 py-1.5 text-[13px] font-medium text-white bg-blue-600 rounded-md hover:bg-blue-700 transition-colors shadow-sm">
             <Plus size={14} />
             New Shipment
           </button>
@@ -80,7 +91,7 @@ export default function Dashboard() {
             <span className="p-1 bg-slate-50 rounded text-slate-400"><Tractor size={14} /></span>
           </div>
           <div className="flex items-end gap-2">
-            <h3 className="text-2xl font-semibold text-slate-900 tracking-tight leading-none">24</h3>
+            <h3 className="text-2xl font-semibold text-slate-900 tracking-tight leading-none">{farms.length}</h3>
             <span className="flex items-center text-[12px] font-medium text-emerald-600 mb-0.5">
               <ArrowUpRight size={12} className="mr-0.5" /> 12%
             </span>
@@ -93,7 +104,9 @@ export default function Dashboard() {
             <span className="p-1 bg-slate-50 rounded text-slate-400"><Package size={14} /></span>
           </div>
           <div className="flex items-end gap-2">
-            <h3 className="text-2xl font-semibold text-slate-900 tracking-tight leading-none">142.5<span className="text-sm font-medium text-slate-500 ml-1">T</span></h3>
+            <h3 className="text-2xl font-semibold text-slate-900 tracking-tight leading-none">
+              {lots.reduce((acc, lot) => acc + lot.weight_tons, 0).toFixed(1)}<span className="text-sm font-medium text-slate-500 ml-1">T</span>
+            </h3>
             <span className="flex items-center text-[12px] font-medium text-emerald-600 mb-0.5">
               <ArrowUpRight size={12} className="mr-0.5" /> 4.2%
             </span>
@@ -106,24 +119,26 @@ export default function Dashboard() {
             <span className="p-1 bg-slate-50 rounded text-slate-400"><HardDrive size={14} /></span>
           </div>
           <div className="flex items-end gap-2">
-            <h3 className="text-2xl font-semibold text-slate-900 tracking-tight leading-none">76%</h3>
+            <h3 className="text-2xl font-semibold text-slate-900 tracking-tight leading-none">
+              {Math.min(100, Math.round((lots.filter(l => l.status === 'Cold Storage').length / 50) * 100))}%
+            </h3>
             <span className="flex items-center text-[12px] font-medium text-red-600 mb-0.5">
               <ArrowDownRight size={12} className="mr-0.5" /> 2.1%
             </span>
           </div>
           <div className="w-full bg-slate-100 rounded-full h-1 mt-3">
-            <div className="bg-accent h-1 rounded-full" style={{ width: '76%' }}></div>
+            <div className="bg-accent h-1 rounded-full" style={{ width: `${Math.min(100, Math.round((lots.filter(l => l.status === 'Cold Storage').length / 50) * 100))}%` }}></div>
           </div>
         </div>
         
         <div className="bg-white p-4 rounded-lg border border-slate-200 shadow-sm flex flex-col justify-between hover:border-slate-300 transition-colors cursor-default relative overflow-hidden">
-          <div className="absolute top-0 right-0 w-16 h-16 bg-accent/5 rounded-bl-full -mr-4 -mt-4"></div>
+          <div className="absolute top-0 right-0 w-16 h-16 bg-blue-600/5 rounded-bl-full -mr-4 -mt-4"></div>
           <div className="flex items-center justify-between mb-3 relative z-10">
             <span className="text-[11px] font-semibold text-slate-500 uppercase tracking-wider">Active Shipments</span>
-            <span className="p-1 bg-blue-50 rounded text-accent"><Ship size={14} /></span>
+            <span className="p-1 bg-blue-50 rounded text-blue-600"><Ship size={14} /></span>
           </div>
           <div className="flex items-end gap-2 relative z-10">
-            <h3 className="text-2xl font-semibold text-accent tracking-tight leading-none">12</h3>
+            <h3 className="text-2xl font-semibold text-blue-600 tracking-tight leading-none">{shipments.filter(s => s.status !== 'Delivered').length}</h3>
           </div>
         </div>
       </div>
@@ -137,7 +152,7 @@ export default function Dashboard() {
           <div className="px-5 py-3.5 border-b border-slate-200 flex justify-between items-center shrink-0">
             <div className="flex items-center gap-2">
               <h3 className="text-[14px] font-semibold text-slate-900">Recent Harvest Lots</h3>
-              <span className="px-2 py-0.5 rounded-full bg-slate-100 text-slate-500 text-[10px] font-semibold tracking-wide">24 TOTAL</span>
+              <span className="px-2 py-0.5 rounded-full bg-slate-100 text-slate-500 text-[10px] font-semibold tracking-wide">{lots.length} TOTAL</span>
             </div>
             <div className="flex items-center gap-2">
               <button className="p-1.5 text-slate-400 hover:text-slate-600 hover:bg-slate-100 rounded border border-transparent hover:border-slate-200 transition-all">
@@ -163,70 +178,32 @@ export default function Dashboard() {
                 </tr>
               </thead>
               <tbody className="divide-y divide-slate-100">
-                <tr className="hover:bg-slate-50/80 transition-colors group cursor-pointer">
-                  <td className="px-5 py-2.5">
-                    <span className="font-mono text-xs font-medium text-slate-700 bg-slate-100 px-1.5 py-0.5 rounded border border-slate-200 group-hover:border-slate-300 transition-colors">LOT-BAN-001</span>
-                  </td>
-                  <td className="px-5 py-2.5 font-medium text-slate-900">Wade Banana Farm</td>
-                  <td className="px-5 py-2.5 text-right font-medium text-slate-700">12.5 T</td>
-                  <td className="px-5 py-2.5 text-slate-500">Oct 24, 09:41 AM</td>
-                  <td className="px-5 py-2.5 text-center">
-                    <span className="inline-flex items-center px-2 py-0.5 rounded-full text-[11px] font-medium bg-emerald-50 text-emerald-700 border border-emerald-200/60">
-                      Grade A
-                    </span>
-                  </td>
-                  <td className="px-5 py-2.5 text-right">
-                    <ChevronRight size={14} className="text-slate-300 group-hover:text-slate-600 inline-block" />
-                  </td>
-                </tr>
-                <tr className="hover:bg-slate-50/80 transition-colors group cursor-pointer">
-                  <td className="px-5 py-2.5">
-                    <span className="font-mono text-xs font-medium text-slate-700 bg-slate-100 px-1.5 py-0.5 rounded border border-slate-200 group-hover:border-slate-300 transition-colors">LOT-GRA-042</span>
-                  </td>
-                  <td className="px-5 py-2.5 font-medium text-slate-900">Pune Vineyards</td>
-                  <td className="px-5 py-2.5 text-right font-medium text-slate-700">8.2 T</td>
-                  <td className="px-5 py-2.5 text-slate-500">Oct 24, 08:12 AM</td>
-                  <td className="px-5 py-2.5 text-center">
-                    <span className="inline-flex items-center px-2 py-0.5 rounded-full text-[11px] font-medium bg-amber-50 text-amber-700 border border-amber-200/60">
-                      Grade C
-                    </span>
-                  </td>
-                  <td className="px-5 py-2.5 text-right">
-                    <ChevronRight size={14} className="text-slate-300 group-hover:text-slate-600 inline-block" />
-                  </td>
-                </tr>
-                <tr className="hover:bg-slate-50/80 transition-colors group cursor-pointer">
-                  <td className="px-5 py-2.5">
-                    <span className="font-mono text-xs font-medium text-slate-700 bg-slate-100 px-1.5 py-0.5 rounded border border-slate-200 group-hover:border-slate-300 transition-colors">LOT-APP-108</span>
-                  </td>
-                  <td className="px-5 py-2.5 font-medium text-slate-900">Himachal Orchards</td>
-                  <td className="px-5 py-2.5 text-right font-medium text-slate-700">24.0 T</td>
-                  <td className="px-5 py-2.5 text-slate-500">Oct 23, 16:30 PM</td>
-                  <td className="px-5 py-2.5 text-center">
-                    <span className="inline-flex items-center px-2 py-0.5 rounded-full text-[11px] font-medium bg-emerald-50 text-emerald-700 border border-emerald-200/60">
-                      Grade A
-                    </span>
-                  </td>
-                  <td className="px-5 py-2.5 text-right">
-                    <ChevronRight size={14} className="text-slate-300 group-hover:text-slate-600 inline-block" />
-                  </td>
-                </tr>
-                 <tr className="hover:bg-slate-50/80 transition-colors group cursor-pointer">
-                  <td className="px-5 py-2.5">
-                    <span className="font-mono text-xs font-medium text-slate-700 bg-slate-100 px-1.5 py-0.5 rounded border border-slate-200 group-hover:border-slate-300 transition-colors">LOT-MAN-019</span>
-                  </td>
-                  <td className="px-5 py-2.5 font-medium text-slate-900">Ratnagiri Co-op</td>
-                  <td className="px-5 py-2.5 text-right font-medium text-slate-700">4.5 T</td>
-                  <td className="px-5 py-2.5 text-slate-500">Oct 23, 11:05 AM</td>
-                  <td className="px-5 py-2.5 text-center">
-                    <span className="inline-flex items-center px-2 py-0.5 rounded-full text-[11px] font-medium bg-blue-50 text-blue-700 border border-blue-200/60">
-                      In Transit
-                    </span>
-                  </td>
-                  <td className="px-5 py-2.5 text-right">
-                    <ChevronRight size={14} className="text-slate-300 group-hover:text-slate-600 inline-block" />
-                  </td>
-                </tr>
+                {lots.map(lot => {
+                  let badgeColor = 'bg-slate-50 text-slate-700 border-slate-200/60';
+                  if (lot.quality_grade === 'Grade A') badgeColor = 'bg-emerald-50 text-emerald-700 border-emerald-200/60';
+                  else if (lot.quality_grade === 'Grade B') badgeColor = 'bg-blue-50 text-blue-700 border-blue-200/60';
+                  else if (lot.quality_grade === 'Grade C') badgeColor = 'bg-amber-50 text-amber-700 border-amber-200/60';
+                  else if (lot.status === 'In Transit') badgeColor = 'bg-purple-50 text-purple-700 border-purple-200/60';
+
+                  return (
+                    <tr key={lot.id} onClick={() => navigate('/packhouse')} className="hover:bg-slate-50/80 transition-colors group cursor-pointer">
+                      <td className="px-5 py-2.5">
+                        <span className="font-mono text-xs font-medium text-slate-700 bg-slate-100 px-1.5 py-0.5 rounded border border-slate-200 group-hover:border-slate-300 transition-colors">{lot.id}</span>
+                      </td>
+                      <td className="px-5 py-2.5 font-medium text-slate-900">{lot.farm_id}</td>
+                      <td className="px-5 py-2.5 text-right font-medium text-slate-700">{lot.weight_tons} T</td>
+                      <td className="px-5 py-2.5 text-slate-500">Just Now</td>
+                      <td className="px-5 py-2.5 text-center">
+                        <span className={`inline-flex items-center px-2 py-0.5 rounded-full text-[11px] font-medium border ${badgeColor}`}>
+                          {lot.quality_grade || lot.status}
+                        </span>
+                      </td>
+                      <td className="px-5 py-2.5 text-right">
+                        <ChevronRight size={14} className="text-slate-300 group-hover:text-slate-600 inline-block" />
+                      </td>
+                    </tr>
+                  )
+                })}
               </tbody>
             </table>
           </div>
@@ -253,10 +230,10 @@ export default function Dashboard() {
               <p className="text-[13px] text-slate-600 leading-relaxed mb-4">Container <span className="font-mono text-xs bg-slate-100 px-1 rounded">CON-889</span> dropped to 1.8°C (Threshold: 2.0°C). Cargo: Bananas.</p>
               
               <div className="flex gap-2 mt-auto">
-                <button className="flex-1 text-[12px] font-medium text-white bg-red-600 px-3 py-1.5 rounded hover:bg-red-700 transition-colors shadow-sm">
+                <button onClick={() => alert('Alert Acknowledged! IoT monitoring continues.')} className="flex-1 text-[12px] font-medium text-white bg-red-600 px-3 py-1.5 rounded hover:bg-red-700 transition-colors shadow-sm">
                   Acknowledge
                 </button>
-                <button className="flex-1 text-[12px] font-medium text-slate-700 bg-white border border-slate-300 px-3 py-1.5 rounded hover:bg-slate-50 transition-colors shadow-sm">
+                <button onClick={() => window.location.href = '/packhouse'} className="flex-1 text-[12px] font-medium text-slate-700 bg-white border border-slate-300 px-3 py-1.5 rounded hover:bg-slate-50 transition-colors shadow-sm">
                   View Logs
                 </button>
               </div>
@@ -269,7 +246,7 @@ export default function Dashboard() {
               <h3 className="text-[13px] font-semibold text-slate-900 uppercase tracking-wide">Quick Actions</h3>
             </div>
             <div className="p-2 flex flex-col gap-1">
-              <button onClick={() => navigate('/buyers')} className="flex items-center justify-between p-2.5 rounded hover:bg-slate-50 transition-colors group text-left">
+              <button onClick={() => navigate('/export-doc')} className="flex items-center justify-between p-2.5 rounded hover:bg-slate-50 transition-colors group text-left">
                 <div>
                   <div className="text-[13px] font-medium text-slate-900 group-hover:text-primary transition-colors">Create Export Doc</div>
                   <div className="text-[11px] text-slate-500">Generate Phytosanitary Cert</div>

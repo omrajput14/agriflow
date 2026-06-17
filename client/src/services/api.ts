@@ -51,6 +51,16 @@ export const createHarvestLot = async (lotData: any) => {
   return response.json();
 };
 
+export const updateLotStatus = async (id: string, status: string) => {
+  const response = await fetch(`${API_URL}/harvest-lots/${id}/status`, {
+    method: 'PATCH',
+    headers: { 'Content-Type': 'application/json' },
+    body: JSON.stringify({ status }),
+  });
+  if (!response.ok) throw new Error('Failed to update lot status');
+  return response.json();
+};
+
 // --- Shipments API ---
 export const getShipments = async () => {
   const response = await fetch(`${API_URL}/shipments`);

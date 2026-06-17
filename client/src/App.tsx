@@ -8,6 +8,7 @@ import Packhouse from './pages/Packhouse';
 import ShipmentsTracker from './pages/ShipmentsTracker';
 import BuyersCRM from './pages/BuyersCRM';
 import ExportDocument from './pages/ExportDocument';
+import ExportReport from './pages/ExportReport';
 
 function App() {
   return (
@@ -22,6 +23,7 @@ function App() {
             <Route path="shipments" element={<ShipmentsTracker />} />
             <Route path="buyers" element={<BuyersCRM />} />
             <Route path="export-doc" element={<ExportDocument />} />
+            <Route path="export-report" element={<ExportReport />} />
             <Route path="*" element={<Navigate to="/" replace />} />
           </Route>
         </Routes>

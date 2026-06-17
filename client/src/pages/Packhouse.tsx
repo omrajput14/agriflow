@@ -2,7 +2,7 @@ import React, { useState, useEffect } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
 import { Search, Plus, Filter, MoreHorizontal, Clock, Thermometer, AlertCircle, X, Loader2 } from 'lucide-react';
 import { useNavigate } from 'react-router-dom';
-import { getHarvestLots, createHarvestLot, getFarms } from '../services/api';
+import { getHarvestLots, createHarvestLot, getFarms, updateLotStatus } from '../services/api';
 
 const KANBAN_COLUMNS = [
   { id: 'Intake', title: 'Intake & Sorting', color: 'bg-slate-100', borderColor: 'border-slate-200' },
@@ -34,6 +34,25 @@ export default function Packhouse() {
       console.error("Failed to load harvest lots", error);
     } finally {
       setLoading(false);
+    }
+  };
+
+  const handleDrop = async (e: React.DragEvent, newStatus: string) => {
+    e.preventDefault();
+    const cardId = e.dataTransfer.getData('card_id');
+    if (!cardId) return;
+
+    // Optimistic update
+    setLots(prev => prev.map(lot => 
+      lot.id === cardId ? { ...lot, status: newStatus } : lot
+    ));
+
+    try {
+      await updateLotStatus(cardId, newStatus);
+    } catch (error) {
+      console.error("Failed to update lot status", error);
+      // Revert on failure by reloading
+      loadLots();
     }
   };
 
@@ -154,9 +173,18 @@ export default function Packhouse() {
                 </div>
 
                 {/* Column Content */}
-                <div className="flex-1 overflow-y-auto p-3 space-y-3">
+                <div 
+                  className="flex-1 overflow-y-auto p-3 space-y-3"
+                  onDragOver={(e) => e.preventDefault()}
+                  onDrop={(e) => handleDrop(e, column.id)}
+                >
                   {filteredCards.filter(c => c.status === column.id).map(card => (
-                    <div key={card.id} className="bg-white border border-slate-200 rounded-lg p-3 shadow-sm hover:shadow hover:border-blue-300 transition-all cursor-grab active:cursor-grabbing group">
+                    <div 
+                      key={card.id} 
+                      draggable
+                      onDragStart={(e) => e.dataTransfer.setData('card_id', card.id)}
+                      className="bg-white border border-slate-200 rounded-lg p-3 shadow-sm hover:shadow hover:border-blue-300 transition-all cursor-grab active:cursor-grabbing group"
+                    >
                       <div className="flex justify-between items-start mb-2">
                         <div className="flex items-center gap-2">
                           <span className="font-mono text-[11px] font-bold text-slate-700 bg-slate-100 px-1.5 py-0.5 rounded border border-slate-200">{card.id}</span>

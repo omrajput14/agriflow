@@ -430,7 +430,10 @@ export default function ShipmentsTracker() {
                 Simulate Progress (Update Status)
               </button>
             )}
-            <button className="w-full text-[13px] font-medium text-slate-700 bg-white border border-slate-300 px-3 py-2.5 rounded-md hover:bg-slate-50 transition-colors shadow-sm flex items-center justify-center gap-2">
+            <button 
+              onClick={() => window.location.href = '/export-doc'}
+              className="w-full text-[13px] font-medium text-slate-700 bg-white border border-slate-300 px-3 py-2.5 rounded-md hover:bg-slate-50 transition-colors shadow-sm flex items-center justify-center gap-2"
+            >
               <FileText size={16} />
               Access Export Documents
             </button>

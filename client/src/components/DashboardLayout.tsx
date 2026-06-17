@@ -20,7 +20,7 @@ export default function DashboardLayout() {
     <div className="flex h-screen bg-[#F8FAFC] text-slate-900 overflow-hidden font-sans selection:bg-primary selection:text-white">
       
       {/* Sidebar Navigation */}
-      <aside className="w-[240px] bg-[#0F172A] text-slate-300 flex flex-col shrink-0 border-r border-slate-800">
+      <aside className="w-[240px] bg-[#0F172A] text-slate-300 flex flex-col shrink-0 border-r border-slate-800 print:hidden">
         <div className="h-14 flex items-center px-4 border-b border-slate-800/60">
           <div className="flex items-center gap-2.5">
             <div className="w-7 h-7 rounded-md bg-gradient-to-br from-primary to-emerald-900 flex items-center justify-center shadow-sm">
@@ -88,10 +88,10 @@ export default function DashboardLayout() {
       </aside>
 
       {/* Main Content Area */}
-      <main className="flex-1 flex flex-col min-w-0 overflow-hidden relative">
+      <main className="flex-1 flex flex-col min-w-0 overflow-hidden relative print:overflow-visible">
         
         {/* Top Header */}
-        <header className="h-14 bg-white border-b border-slate-200 flex items-center justify-between px-6 shrink-0 z-10">
+        <header className="h-14 bg-white border-b border-slate-200 flex items-center justify-between px-6 shrink-0 z-10 print:hidden">
           <div className="flex items-center gap-2 text-[13px]">
             <span className="text-slate-500 font-medium">Operations</span>
             <span className="text-slate-400">/</span>
