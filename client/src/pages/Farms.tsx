@@ -1,24 +1,61 @@
-import React from 'react';
-import { motion } from 'framer-motion';
-import { Search, Plus, Filter, MoreHorizontal, MapPin, Sprout, Tractor, Leaf } from 'lucide-react';
+import React, { useState, useEffect } from 'react';
+import { motion, AnimatePresence } from 'framer-motion';
+import { Search, Plus, Filter, MoreHorizontal, MapPin, Sprout, Tractor, Leaf, X, Loader2 } from 'lucide-react';
+import { getFarms, createFarm } from '../services/api';
 
 export default function Farms() {
-  const farms = [
-    { id: 'FRM-001', name: 'Wade Banana Farm', owner: 'Rahul Wade', location: 'Jalgaon, MH', crop: 'Cavendish Banana', area: '35 Acres', yield: '120 Tons', status: 'Harvesting' },
-    { id: 'FRM-002', name: 'Pune Vineyards', owner: 'Sanjay Patil', location: 'Nashik, MH', crop: 'Thompson Grapes', area: '12 Acres', yield: '24 Tons', status: 'Growing' },
-    { id: 'FRM-003', name: 'Himachal Orchards', owner: 'Amit Sharma', location: 'Shimla, HP', crop: 'Fuji Apples', area: '40 Acres', yield: '180 Tons', status: 'Idle' },
-    { id: 'FRM-004', name: 'Ratnagiri Co-op', owner: 'Vijay Desai', location: 'Ratnagiri, MH', crop: 'Alphonso Mango', area: '25 Acres', yield: '45 Tons', status: 'Growing' },
-    { id: 'FRM-005', name: 'Kisan Onion Fields', owner: 'Pramod Kumar', location: 'Lasalgaon, MH', crop: 'Red Onion', area: '50 Acres', yield: '300 Tons', status: 'Harvesting' },
-  ];
+  const [farms, setFarms] = useState<any[]>([]);
+  const [loading, setLoading] = useState(true);
+  const [isModalOpen, setIsModalOpen] = useState(false);
+  const [isSubmitting, setIsSubmitting] = useState(false);
+
+  // Form State
+  const [formData, setFormData] = useState({
+    id: '', name: '', owner: '', location: '', crop_type: '', area_acres: 0, expected_yield_tons: 0, status: 'Growing'
+  });
+
+  const loadFarms = async () => {
+    try {
+      setLoading(true);
+      const data = await getFarms();
+      setFarms(data);
+    } catch (error) {
+      console.error("Failed to load farms", error);
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  useEffect(() => {
+    loadFarms();
+  }, []);
+
+  const handleCreateSubmit = async (e: React.FormEvent) => {
+    e.preventDefault();
+    try {
+      setIsSubmitting(true);
+      await createFarm(formData);
+      await loadFarms();
+      setIsModalOpen(false);
+      setFormData({ id: '', name: '', owner: '', location: '', crop_type: '', area_acres: 0, expected_yield_tons: 0, status: 'Growing' });
+    } catch (error) {
+      alert("Failed to create farm. Check ID format.");
+    } finally {
+      setIsSubmitting(false);
+    }
+  };
 
   const getStatusBadge = (status: string) => {
     switch (status) {
       case 'Harvesting': return <span className="inline-flex items-center px-2 py-0.5 rounded text-[11px] font-medium bg-amber-50 text-amber-700 border border-amber-200">Harvesting</span>;
       case 'Growing': return <span className="inline-flex items-center px-2 py-0.5 rounded text-[11px] font-medium bg-emerald-50 text-emerald-700 border border-emerald-200">Growing</span>;
       case 'Idle': return <span className="inline-flex items-center px-2 py-0.5 rounded text-[11px] font-medium bg-slate-100 text-slate-600 border border-slate-200">Idle / Prep</span>;
-      default: return null;
+      default: return <span className="inline-flex items-center px-2 py-0.5 rounded text-[11px] font-medium bg-slate-100 text-slate-600 border border-slate-200">{status}</span>;
     }
   };
+
+  const totalArea = farms.reduce((sum, f) => sum + f.area_acres, 0);
+  const totalYield = farms.reduce((sum, f) => sum + f.expected_yield_tons, 0);
 
   return (
     <motion.div 
@@ -34,7 +71,10 @@ export default function Farms() {
           <h1 className="text-2xl font-semibold text-slate-900 tracking-tight">Farms & Harvest</h1>
           <p className="text-[13px] text-slate-500 mt-0.5">Manage agricultural assets, crop cycles, and predicted yields.</p>
         </div>
-        <button className="flex items-center gap-1.5 px-4 py-2 text-[13px] font-medium text-white bg-primary rounded-md hover:bg-emerald-800 transition-colors shadow-sm">
+        <button 
+          onClick={() => setIsModalOpen(true)}
+          className="flex items-center gap-1.5 px-4 py-2 text-[13px] font-medium text-white bg-primary rounded-md hover:bg-emerald-800 transition-colors shadow-sm"
+        >
           <Plus size={16} />
           Register New Farm
         </button>
@@ -48,7 +88,7 @@ export default function Farms() {
           </div>
           <div>
             <p className="text-[11px] font-semibold text-slate-500 uppercase tracking-wider">Total Farms</p>
-            <p className="text-xl font-semibold text-slate-900 mt-0.5">142</p>
+            <p className="text-xl font-semibold text-slate-900 mt-0.5">{farms.length}</p>
           </div>
         </div>
         <div className="bg-white p-4 rounded-lg border border-slate-200 shadow-sm flex items-center gap-4">
@@ -57,7 +97,7 @@ export default function Farms() {
           </div>
           <div>
             <p className="text-[11px] font-semibold text-slate-500 uppercase tracking-wider">Total Area</p>
-            <p className="text-xl font-semibold text-slate-900 mt-0.5">1,240 <span className="text-sm text-slate-500 font-medium">Acres</span></p>
+            <p className="text-xl font-semibold text-slate-900 mt-0.5">{totalArea} <span className="text-sm text-slate-500 font-medium">Acres</span></p>
           </div>
         </div>
         <div className="bg-white p-4 rounded-lg border border-slate-200 shadow-sm flex items-center gap-4">
@@ -66,23 +106,13 @@ export default function Farms() {
           </div>
           <div>
             <p className="text-[11px] font-semibold text-slate-500 uppercase tracking-wider">Est. Harvest Yield</p>
-            <p className="text-xl font-semibold text-slate-900 mt-0.5">8,450 <span className="text-sm text-slate-500 font-medium">Tons</span></p>
-          </div>
-        </div>
-        <div className="bg-white p-4 rounded-lg border border-slate-200 shadow-sm flex items-center gap-4">
-          <div className="w-10 h-10 rounded-full bg-purple-50 flex items-center justify-center text-purple-600 shrink-0">
-            <Sprout size={18} />
-          </div>
-          <div>
-            <p className="text-[11px] font-semibold text-slate-500 uppercase tracking-wider">Active Harvests</p>
-            <p className="text-xl font-semibold text-slate-900 mt-0.5">12 <span className="text-sm text-slate-500 font-medium">Lots</span></p>
+            <p className="text-xl font-semibold text-slate-900 mt-0.5">{totalYield} <span className="text-sm text-slate-500 font-medium">Tons</span></p>
           </div>
         </div>
       </div>
 
       {/* Main Data Table */}
       <div className="bg-white rounded-lg border border-slate-200 shadow-sm flex flex-col min-h-[500px]">
-        {/* Table Toolbar */}
         <div className="px-5 py-4 border-b border-slate-200 flex items-center justify-between">
           <div className="relative">
             <Search className="absolute left-3 top-1/2 -translate-y-1/2 text-slate-400" size={16} />
@@ -92,78 +122,134 @@ export default function Farms() {
               className="pl-9 pr-4 py-2 border border-slate-300 rounded-md text-[13px] w-80 focus:outline-none focus:ring-1 focus:ring-primary focus:border-primary placeholder:text-slate-400"
             />
           </div>
-          <div className="flex items-center gap-3">
-            <button className="flex items-center gap-2 px-3 py-2 text-[13px] font-medium text-slate-700 bg-white border border-slate-300 rounded-md hover:bg-slate-50 transition-colors">
-              <Filter size={16} className="text-slate-400" />
-              Filter
-            </button>
-          </div>
         </div>
 
-        {/* Table */}
         <div className="flex-1 overflow-x-auto">
-          <table className="w-full text-left border-collapse whitespace-nowrap">
-            <thead className="bg-slate-50 text-[11px] font-semibold text-slate-500 uppercase tracking-wider border-b border-slate-200">
-              <tr>
-                <th className="px-6 py-3">Farm ID</th>
-                <th className="px-6 py-3">Farm Details</th>
-                <th className="px-6 py-3">Location</th>
-                <th className="px-6 py-3">Crop Profile</th>
-                <th className="px-6 py-3 text-right">Area</th>
-                <th className="px-6 py-3 text-right">Est. Yield</th>
-                <th className="px-6 py-3 text-center">Status</th>
-                <th className="px-6 py-3 text-right">Actions</th>
-              </tr>
-            </thead>
-            <tbody className="divide-y divide-slate-100 text-[13px]">
-              {farms.map((farm) => (
-                <tr key={farm.id} className="hover:bg-slate-50/50 transition-colors group cursor-pointer">
-                  <td className="px-6 py-4">
-                    <span className="font-mono text-[12px] font-medium text-slate-600 bg-slate-100 px-2 py-1 rounded border border-slate-200">{farm.id}</span>
-                  </td>
-                  <td className="px-6 py-4">
-                    <p className="font-semibold text-slate-900">{farm.name}</p>
-                    <p className="text-slate-500 mt-0.5 text-[12px]">{farm.owner}</p>
-                  </td>
-                  <td className="px-6 py-4 text-slate-600">{farm.location}</td>
-                  <td className="px-6 py-4">
-                    <div className="flex items-center gap-2">
-                      <div className="w-6 h-6 rounded bg-slate-100 border border-slate-200 flex items-center justify-center text-slate-400">
-                        <Leaf size={12} />
-                      </div>
-                      <span className="font-medium text-slate-800">{farm.crop}</span>
-                    </div>
-                  </td>
-                  <td className="px-6 py-4 text-right font-medium text-slate-700">{farm.area}</td>
-                  <td className="px-6 py-4 text-right font-medium text-slate-700">{farm.yield}</td>
-                  <td className="px-6 py-4 text-center">
-                    {getStatusBadge(farm.status)}
-                  </td>
-                  <td className="px-6 py-4 text-right">
-                    <button className="p-1.5 text-slate-400 hover:text-slate-700 hover:bg-slate-100 rounded transition-colors">
-                      <MoreHorizontal size={16} />
-                    </button>
-                  </td>
+          {loading ? (
+             <div className="flex flex-col items-center justify-center h-64 text-slate-400 gap-3">
+               <Loader2 className="animate-spin" size={24} />
+               <p className="text-[13px]">Loading database records...</p>
+             </div>
+          ) : farms.length === 0 ? (
+             <div className="flex flex-col items-center justify-center h-64 text-slate-500 gap-3">
+               <Tractor size={32} className="text-slate-300" />
+               <p className="text-[13px]">No farms in database yet. Add one!</p>
+             </div>
+          ) : (
+            <table className="w-full text-left border-collapse whitespace-nowrap">
+              <thead className="bg-slate-50 text-[11px] font-semibold text-slate-500 uppercase tracking-wider border-b border-slate-200">
+                <tr>
+                  <th className="px-6 py-3">Farm ID</th>
+                  <th className="px-6 py-3">Farm Details</th>
+                  <th className="px-6 py-3">Location</th>
+                  <th className="px-6 py-3">Crop Profile</th>
+                  <th className="px-6 py-3 text-right">Area</th>
+                  <th className="px-6 py-3 text-right">Est. Yield</th>
+                  <th className="px-6 py-3 text-center">Status</th>
                 </tr>
-              ))}
-            </tbody>
-          </table>
-        </div>
-        
-        {/* Pagination Footer */}
-        <div className="px-6 py-4 border-t border-slate-200 flex items-center justify-between text-[13px] text-slate-500 bg-slate-50 rounded-b-lg shrink-0">
-          <span>Showing 1 to 5 of 142 entries</span>
-          <div className="flex items-center gap-1 text-slate-700 font-medium">
-            <button className="px-3 py-1.5 border border-slate-300 rounded hover:bg-white bg-slate-100 text-slate-400 cursor-not-allowed">Previous</button>
-            <button className="px-3 py-1.5 border border-slate-300 rounded hover:bg-slate-50 bg-white">1</button>
-            <button className="px-3 py-1.5 border border-slate-300 rounded hover:bg-slate-50 bg-white">2</button>
-            <button className="px-3 py-1.5 border border-slate-300 rounded hover:bg-slate-50 bg-white">3</button>
-            <span className="px-2">...</span>
-            <button className="px-3 py-1.5 border border-slate-300 rounded hover:bg-slate-50 bg-white">29</button>
-            <button className="px-3 py-1.5 border border-slate-300 rounded hover:bg-slate-50 bg-white">Next</button>
-          </div>
+              </thead>
+              <tbody className="divide-y divide-slate-100 text-[13px]">
+                {farms.map((farm) => (
+                  <tr key={farm.id} className="hover:bg-slate-50/50 transition-colors group cursor-pointer">
+                    <td className="px-6 py-4">
+                      <span className="font-mono text-[12px] font-medium text-slate-600 bg-slate-100 px-2 py-1 rounded border border-slate-200">{farm.id}</span>
+                    </td>
+                    <td className="px-6 py-4">
+                      <p className="font-semibold text-slate-900">{farm.name}</p>
+                      <p className="text-slate-500 mt-0.5 text-[12px]">{farm.owner}</p>
+                    </td>
+                    <td className="px-6 py-4 text-slate-600">{farm.location}</td>
+                    <td className="px-6 py-4">
+                      <div className="flex items-center gap-2">
+                        <div className="w-6 h-6 rounded bg-slate-100 border border-slate-200 flex items-center justify-center text-slate-400">
+                          <Leaf size={12} />
+                        </div>
+                        <span className="font-medium text-slate-800">{farm.crop_type}</span>
+                      </div>
+                    </td>
+                    <td className="px-6 py-4 text-right font-medium text-slate-700">{farm.area_acres} Ac</td>
+                    <td className="px-6 py-4 text-right font-medium text-slate-700">{farm.expected_yield_tons} T</td>
+                    <td className="px-6 py-4 text-center">
+                      {getStatusBadge(farm.status)}
+                    </td>
+                  </tr>
+                ))}
+              </tbody>
+            </table>
+          )}
         </div>
       </div>
+
+      {/* CREATE FARM MODAL */}
+      <AnimatePresence>
+        {isModalOpen && (
+          <>
+            <motion.div 
+              initial={{ opacity: 0 }} animate={{ opacity: 1 }} exit={{ opacity: 0 }}
+              className="fixed inset-0 bg-slate-900/40 backdrop-blur-sm z-40"
+              onClick={() => setIsModalOpen(false)}
+            />
+            <motion.div 
+              initial={{ opacity: 0, scale: 0.95, y: 20 }} 
+              animate={{ opacity: 1, scale: 1, y: 0 }} 
+              exit={{ opacity: 0, scale: 0.95, y: 20 }}
+              className="fixed left-1/2 top-1/2 -translate-x-1/2 -translate-y-1/2 w-full max-w-md bg-white rounded-xl shadow-2xl z-50 overflow-hidden flex flex-col"
+            >
+              <div className="px-6 py-4 border-b border-slate-100 flex justify-between items-center bg-slate-50/50">
+                <h2 className="text-lg font-semibold text-slate-900">Register New Farm</h2>
+                <button onClick={() => setIsModalOpen(false)} className="text-slate-400 hover:text-slate-600"><X size={20} /></button>
+              </div>
+              <form onSubmit={handleCreateSubmit} className="p-6 space-y-4">
+                <div className="grid grid-cols-2 gap-4">
+                  <div className="space-y-1">
+                    <label className="text-[12px] font-medium text-slate-700">Farm ID</label>
+                    <input required type="text" value={formData.id} onChange={(e) => setFormData({...formData, id: e.target.value})} placeholder="FRM-001" className="w-full px-3 py-2 text-[13px] border border-slate-300 rounded-md focus:outline-none focus:border-primary focus:ring-1 focus:ring-primary" />
+                  </div>
+                  <div className="space-y-1">
+                    <label className="text-[12px] font-medium text-slate-700">Farm Name</label>
+                    <input required type="text" value={formData.name} onChange={(e) => setFormData({...formData, name: e.target.value})} placeholder="Green Valley Farm" className="w-full px-3 py-2 text-[13px] border border-slate-300 rounded-md focus:outline-none focus:border-primary focus:ring-1 focus:ring-primary" />
+                  </div>
+                </div>
+
+                <div className="grid grid-cols-2 gap-4">
+                  <div className="space-y-1">
+                    <label className="text-[12px] font-medium text-slate-700">Owner Name</label>
+                    <input required type="text" value={formData.owner} onChange={(e) => setFormData({...formData, owner: e.target.value})} placeholder="John Doe" className="w-full px-3 py-2 text-[13px] border border-slate-300 rounded-md focus:outline-none focus:border-primary focus:ring-1 focus:ring-primary" />
+                  </div>
+                  <div className="space-y-1">
+                    <label className="text-[12px] font-medium text-slate-700">Location</label>
+                    <input required type="text" value={formData.location} onChange={(e) => setFormData({...formData, location: e.target.value})} placeholder="California, USA" className="w-full px-3 py-2 text-[13px] border border-slate-300 rounded-md focus:outline-none focus:border-primary focus:ring-1 focus:ring-primary" />
+                  </div>
+                </div>
+
+                <div className="space-y-1">
+                  <label className="text-[12px] font-medium text-slate-700">Crop Type</label>
+                  <input required type="text" value={formData.crop_type} onChange={(e) => setFormData({...formData, crop_type: e.target.value})} placeholder="Cavendish Bananas" className="w-full px-3 py-2 text-[13px] border border-slate-300 rounded-md focus:outline-none focus:border-primary focus:ring-1 focus:ring-primary" />
+                </div>
+
+                <div className="grid grid-cols-2 gap-4">
+                  <div className="space-y-1">
+                    <label className="text-[12px] font-medium text-slate-700">Area (Acres)</label>
+                    <input required type="number" value={formData.area_acres} onChange={(e) => setFormData({...formData, area_acres: parseFloat(e.target.value)})} className="w-full px-3 py-2 text-[13px] border border-slate-300 rounded-md focus:outline-none focus:border-primary focus:ring-1 focus:ring-primary" />
+                  </div>
+                  <div className="space-y-1">
+                    <label className="text-[12px] font-medium text-slate-700">Expected Yield (Tons)</label>
+                    <input required type="number" value={formData.expected_yield_tons} onChange={(e) => setFormData({...formData, expected_yield_tons: parseFloat(e.target.value)})} className="w-full px-3 py-2 text-[13px] border border-slate-300 rounded-md focus:outline-none focus:border-primary focus:ring-1 focus:ring-primary" />
+                  </div>
+                </div>
+
+                <div className="pt-4 mt-6 border-t border-slate-100 flex justify-end gap-3">
+                  <button type="button" onClick={() => setIsModalOpen(false)} className="px-4 py-2 text-[13px] font-medium text-slate-600 bg-white border border-slate-300 rounded-md hover:bg-slate-50">Cancel</button>
+                  <button type="submit" disabled={isSubmitting} className="flex items-center gap-2 px-4 py-2 text-[13px] font-medium text-white bg-primary rounded-md hover:bg-emerald-800 disabled:opacity-50">
+                    {isSubmitting && <Loader2 className="animate-spin" size={14} />}
+                    Save Farm
+                  </button>
+                </div>
+              </form>
+            </motion.div>
+          </>
+        )}
+      </AnimatePresence>
     </motion.div>
   );
 }
