@@ -6,6 +6,7 @@ import { getFarms, createFarm } from '../services/api';
 export default function Farms() {
   const [farms, setFarms] = useState<any[]>([]);
   const [loading, setLoading] = useState(true);
+  const [searchTerm, setSearchTerm] = useState('');
   const [isModalOpen, setIsModalOpen] = useState(false);
   const [isSubmitting, setIsSubmitting] = useState(false);
 
@@ -118,6 +119,8 @@ export default function Farms() {
             <Search className="absolute left-3 top-1/2 -translate-y-1/2 text-slate-400" size={16} />
             <input 
               type="text" 
+              value={searchTerm}
+              onChange={(e) => setSearchTerm(e.target.value)}
               placeholder="Search farms, crops, or owners..." 
               className="pl-9 pr-4 py-2 border border-slate-300 rounded-md text-[13px] w-80 focus:outline-none focus:ring-1 focus:ring-primary focus:border-primary placeholder:text-slate-400"
             />
@@ -149,7 +152,7 @@ export default function Farms() {
                 </tr>
               </thead>
               <tbody className="divide-y divide-slate-100 text-[13px]">
-                {farms.map((farm) => (
+                {farms.filter(f => f.name.toLowerCase().includes(searchTerm.toLowerCase()) || f.id.toLowerCase().includes(searchTerm.toLowerCase()) || f.owner.toLowerCase().includes(searchTerm.toLowerCase())).map((farm) => (
                   <tr key={farm.id} className="hover:bg-slate-50/50 transition-colors group cursor-pointer">
                     <td className="px-6 py-4">
                       <span className="font-mono text-[12px] font-medium text-slate-600 bg-slate-100 px-2 py-1 rounded border border-slate-200">{farm.id}</span>
@@ -186,14 +189,14 @@ export default function Farms() {
           <>
             <motion.div 
               initial={{ opacity: 0 }} animate={{ opacity: 1 }} exit={{ opacity: 0 }}
-              className="fixed inset-0 bg-slate-900/40 backdrop-blur-sm z-40"
+              className="absolute inset-0 bg-slate-900/40 backdrop-blur-sm z-40"
               onClick={() => setIsModalOpen(false)}
             />
             <motion.div 
-              initial={{ opacity: 0, scale: 0.95, y: 20 }} 
-              animate={{ opacity: 1, scale: 1, y: 0 }} 
-              exit={{ opacity: 0, scale: 0.95, y: 20 }}
-              className="fixed left-1/2 top-1/2 -translate-x-1/2 -translate-y-1/2 w-full max-w-md bg-white rounded-xl shadow-2xl z-50 overflow-hidden flex flex-col"
+              initial={{ opacity: 0, scale: 0.95, x: "-50%", y: "-45%" }} 
+              animate={{ opacity: 1, scale: 1, x: "-50%", y: "-50%" }} 
+              exit={{ opacity: 0, scale: 0.95, x: "-50%", y: "-45%" }}
+              className="absolute left-1/2 top-1/2 w-full max-w-md bg-white rounded-xl shadow-2xl z-50 overflow-hidden flex flex-col"
             >
               <div className="px-6 py-4 border-b border-slate-100 flex justify-between items-center bg-slate-50/50">
                 <h2 className="text-lg font-semibold text-slate-900">Register New Farm</h2>

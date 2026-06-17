@@ -1,8 +1,51 @@
-import React from 'react';
-import { motion } from 'framer-motion';
-import { Tractor, Package, Ship, Filter, Download, ArrowUpRight, ArrowDownRight, ChevronRight, HardDrive, Plus } from 'lucide-react';
+import React, { useState, useEffect } from 'react';
+import { motion, AnimatePresence } from 'framer-motion';
+import { useNavigate } from 'react-router-dom';
+import { Tractor, Package, Ship, Filter, Download, ArrowUpRight, ArrowDownRight, ChevronRight, HardDrive, Plus, X, Loader2 } from 'lucide-react';
+import { createShipment, getBuyers } from '../services/api';
 
 export default function Dashboard() {
+  const navigate = useNavigate();
+  const [isModalOpen, setIsModalOpen] = useState(false);
+  const [isSubmitting, setIsSubmitting] = useState(false);
+  const [buyers, setBuyers] = useState<any[]>([]);
+
+  const [formData, setFormData] = useState({
+    id: '', buyer_id: '', container_number: '', status: 'Planned'
+  });
+
+  useEffect(() => {
+    const fetchBuyers = async () => {
+      try {
+        const data = await getBuyers();
+        setBuyers(data);
+      } catch (error) {
+        console.error("Failed to load buyers", error);
+      }
+    };
+    fetchBuyers();
+  }, []);
+
+  const handleCreateSubmit = async (e: React.FormEvent) => {
+    e.preventDefault();
+    if (!formData.buyer_id) {
+      alert("Please select a valid Buyer ID. If none exist, create a Buyer in the CRM first.");
+      return;
+    }
+    try {
+      setIsSubmitting(true);
+      await createShipment(formData);
+      setIsModalOpen(false);
+      setFormData({ id: '', buyer_id: '', container_number: '', status: 'Planned' });
+      // Navigate to shipments to see the new tracker!
+      navigate('/shipments');
+    } catch (error) {
+      alert("Failed to create shipment. Check ID format.");
+    } finally {
+      setIsSubmitting(false);
+    }
+  };
+
   return (
     <motion.div 
       initial={{ opacity: 0, y: 10 }}
@@ -18,11 +61,11 @@ export default function Dashboard() {
           <p className="text-[13px] text-slate-500 mt-0.5">Real-time supply chain telemetry and export tracking.</p>
         </div>
         <div className="flex items-center gap-2">
-          <button className="flex items-center gap-1.5 px-3 py-1.5 text-[13px] font-medium text-slate-700 bg-white border border-slate-300 rounded-md hover:bg-slate-50 transition-colors shadow-sm">
+          <button onClick={() => alert("Report generation feature coming soon!")} className="flex items-center gap-1.5 px-3 py-1.5 text-[13px] font-medium text-slate-700 bg-white border border-slate-300 rounded-md hover:bg-slate-50 transition-colors shadow-sm">
             <Download size={14} />
             Export Report
           </button>
-          <button className="flex items-center gap-1.5 px-3 py-1.5 text-[13px] font-medium text-white bg-accent border border-transparent rounded-md hover:bg-blue-700 transition-colors shadow-sm">
+          <button onClick={() => setIsModalOpen(true)} className="flex items-center gap-1.5 px-3 py-1.5 text-[13px] font-medium text-white bg-accent border border-transparent rounded-md hover:bg-blue-700 transition-colors shadow-sm">
             <Plus size={14} />
             New Shipment
           </button>
@@ -100,7 +143,7 @@ export default function Dashboard() {
               <button className="p-1.5 text-slate-400 hover:text-slate-600 hover:bg-slate-100 rounded border border-transparent hover:border-slate-200 transition-all">
                 <Filter size={14} />
               </button>
-              <button className="text-[12px] text-white font-medium bg-slate-900 px-2.5 py-1.5 rounded hover:bg-slate-800 transition-colors shadow-sm">
+              <button onClick={() => navigate('/packhouse')} className="text-[12px] text-white font-medium bg-slate-900 px-2.5 py-1.5 rounded hover:bg-slate-800 transition-colors shadow-sm">
                 Register Lot
               </button>
             </div>
@@ -226,14 +269,14 @@ export default function Dashboard() {
               <h3 className="text-[13px] font-semibold text-slate-900 uppercase tracking-wide">Quick Actions</h3>
             </div>
             <div className="p-2 flex flex-col gap-1">
-              <button className="flex items-center justify-between p-2.5 rounded hover:bg-slate-50 transition-colors group text-left">
+              <button onClick={() => navigate('/buyers')} className="flex items-center justify-between p-2.5 rounded hover:bg-slate-50 transition-colors group text-left">
                 <div>
                   <div className="text-[13px] font-medium text-slate-900 group-hover:text-primary transition-colors">Create Export Doc</div>
                   <div className="text-[11px] text-slate-500">Generate Phytosanitary Cert</div>
                 </div>
                 <ChevronRight size={14} className="text-slate-300 group-hover:text-primary transition-colors" />
               </button>
-              <button className="flex items-center justify-between p-2.5 rounded hover:bg-slate-50 transition-colors group text-left">
+              <button onClick={() => navigate('/packhouse')} className="flex items-center justify-between p-2.5 rounded hover:bg-slate-50 transition-colors group text-left">
                 <div>
                   <div className="text-[13px] font-medium text-slate-900 group-hover:text-primary transition-colors">Add Cold Storage Log</div>
                   <div className="text-[11px] text-slate-500">Manual temp entry</div>
@@ -246,6 +289,60 @@ export default function Dashboard() {
         </div>
         
       </div>
+
+      {/* CREATE SHIPMENT MODAL */}
+      <AnimatePresence>
+        {isModalOpen && (
+          <>
+            <motion.div 
+              initial={{ opacity: 0 }} animate={{ opacity: 1 }} exit={{ opacity: 0 }}
+              className="absolute inset-0 bg-slate-900/40 backdrop-blur-sm z-40"
+              onClick={() => setIsModalOpen(false)}
+            />
+            <motion.div 
+              initial={{ opacity: 0, scale: 0.95, x: "-50%", y: "-45%" }} 
+              animate={{ opacity: 1, scale: 1, x: "-50%", y: "-50%" }} 
+              exit={{ opacity: 0, scale: 0.95, x: "-50%", y: "-45%" }}
+              className="absolute left-1/2 top-1/2 w-full max-w-md bg-white rounded-xl shadow-2xl z-50 overflow-hidden flex flex-col"
+            >
+              <div className="px-6 py-4 border-b border-slate-100 flex justify-between items-center bg-slate-50/50">
+                <h2 className="text-lg font-semibold text-slate-900">Create Export Shipment</h2>
+                <button onClick={() => setIsModalOpen(false)} className="text-slate-400 hover:text-slate-600"><X size={20} /></button>
+              </div>
+              <form onSubmit={handleCreateSubmit} className="p-6 space-y-4">
+                <div className="grid grid-cols-2 gap-4">
+                  <div className="space-y-1">
+                    <label className="text-[12px] font-medium text-slate-700">Shipment ID</label>
+                    <input required type="text" value={formData.id} onChange={(e) => setFormData({...formData, id: e.target.value})} placeholder="SHP-200" className="w-full px-3 py-2 text-[13px] border border-slate-300 rounded-md focus:outline-none focus:border-primary focus:ring-1 focus:ring-primary" />
+                  </div>
+                  <div className="space-y-1">
+                    <label className="text-[12px] font-medium text-slate-700">Buyer</label>
+                    <select required value={formData.buyer_id} onChange={(e) => setFormData({...formData, buyer_id: e.target.value})} className="w-full px-3 py-2 text-[13px] border border-slate-300 rounded-md focus:outline-none focus:border-primary focus:ring-1 focus:ring-primary bg-white">
+                      <option value="">Select a Buyer...</option>
+                      {buyers.map((buyer) => (
+                        <option key={buyer.id} value={buyer.id}>{buyer.company_name} ({buyer.id})</option>
+                      ))}
+                    </select>
+                  </div>
+                </div>
+
+                <div className="space-y-1">
+                  <label className="text-[12px] font-medium text-slate-700">Container Number</label>
+                  <input required type="text" value={formData.container_number} onChange={(e) => setFormData({...formData, container_number: e.target.value})} placeholder="MSKU-1234567" className="w-full px-3 py-2 text-[13px] border border-slate-300 rounded-md focus:outline-none focus:border-primary focus:ring-1 focus:ring-primary" />
+                </div>
+
+                <div className="pt-4 mt-6 border-t border-slate-100 flex justify-end gap-3">
+                  <button type="button" onClick={() => setIsModalOpen(false)} className="px-4 py-2 text-[13px] font-medium text-slate-600 bg-white border border-slate-300 rounded-md hover:bg-slate-50">Cancel</button>
+                  <button type="submit" disabled={isSubmitting} className="flex items-center gap-2 px-4 py-2 text-[13px] font-medium text-white bg-primary rounded-md hover:bg-emerald-800 disabled:opacity-50">
+                    {isSubmitting && <Loader2 className="animate-spin" size={14} />}
+                    Create Tracking Link
+                  </button>
+                </div>
+              </form>
+            </motion.div>
+          </>
+        )}
+      </AnimatePresence>
     </motion.div>
   );
 }

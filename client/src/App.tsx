@@ -7,6 +7,7 @@ import Farms from './pages/Farms';
 import Packhouse from './pages/Packhouse';
 import ShipmentsTracker from './pages/ShipmentsTracker';
 import BuyersCRM from './pages/BuyersCRM';
+import ExportDocument from './pages/ExportDocument';
 
 function App() {
   return (
@@ -16,15 +17,11 @@ function App() {
         <Routes>
           <Route path="/" element={<DashboardLayout />}>
             <Route index element={<Dashboard />} />
-            
             <Route path="farms" element={<Farms />} />
-            
             <Route path="packhouse" element={<Packhouse />} />
-            
             <Route path="shipments" element={<ShipmentsTracker />} />
-            
             <Route path="buyers" element={<BuyersCRM />} />
-            
+            <Route path="export-doc" element={<ExportDocument />} />
             <Route path="*" element={<Navigate to="/" replace />} />
           </Route>
         </Routes>
