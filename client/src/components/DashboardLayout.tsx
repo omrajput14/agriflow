@@ -1,6 +1,6 @@
 import React from 'react';
 import { NavLink, Outlet, useLocation } from 'react-router-dom';
-import { LayoutDashboard, Tractor, Package, Ship, Users, Settings, Bell, Search, LogOut, ChevronRight } from 'lucide-react';
+import { LayoutDashboard, Tractor, Package, Ship, Users, Settings, Bell, Search, LogOut, ChevronRight, LineChart } from 'lucide-react';
 import { useAuth } from '../context/AuthContext';
 
 export default function DashboardLayout() {
@@ -12,6 +12,7 @@ export default function DashboardLayout() {
     { name: user?.role === 'Farmer' ? 'My Farm & Harvest' : 'Farms & Harvest', href: '/farms', icon: Tractor, roles: ['Admin', 'Farmer', 'Operations'] },
     { name: 'Packhouse', href: '/packhouse', icon: Package, roles: ['Admin', 'Operations'] },
     { name: 'Shipments', href: '/shipments', icon: Ship, roles: ['Admin', 'Exporter', 'Buyer'], badge: '3' },
+    { name: 'Market Intel', href: '/market-intel', icon: LineChart, roles: ['Admin', 'Exporter'] },
     { name: 'Buyers CRM', href: '/buyers', icon: Users, roles: ['Admin', 'Exporter'] },
   ];
 
