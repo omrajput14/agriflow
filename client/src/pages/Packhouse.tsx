@@ -3,6 +3,7 @@ import { motion, AnimatePresence } from 'framer-motion';
 import { Search, Plus, Filter, MoreHorizontal, Clock, Thermometer, AlertCircle, X, Loader2 } from 'lucide-react';
 import { useNavigate } from 'react-router-dom';
 import { getHarvestLots, createHarvestLot, getFarms, updateLotStatus } from '../services/api';
+import { useAuth } from '../context/AuthContext';
 
 const KANBAN_COLUMNS = [
   { id: 'Intake', title: 'Intake & Sorting', color: 'bg-slate-100', borderColor: 'border-slate-200' },
@@ -12,6 +13,7 @@ const KANBAN_COLUMNS = [
 ];
 
 export default function Packhouse() {
+  const { user } = useAuth();
   const navigate = useNavigate();
   const [searchTerm, setSearchTerm] = useState('');
   const [lots, setLots] = useState<any[]>([]);
@@ -28,7 +30,10 @@ export default function Packhouse() {
   const loadLots = async () => {
     try {
       setLoading(true);
-      const data = await getHarvestLots();
+      let data = await getHarvestLots();
+      if (user?.role === 'Farmer') {
+         data = data.filter((l: any) => l.farm_id === 'FRM-001' || l.farm_id.includes(user.full_name));
+      }
       setLots(data);
     } catch (error) {
       console.error("Failed to load harvest lots", error);
@@ -39,6 +44,8 @@ export default function Packhouse() {
 
   const handleDrop = async (e: React.DragEvent, newStatus: string) => {
     e.preventDefault();
+    if (user?.role === 'Farmer') return;
+
     const cardId = e.dataTransfer.getData('card_id');
     if (!cardId) return;
 
@@ -122,10 +129,12 @@ export default function Packhouse() {
               <Thermometer size={14} />
               Cold Storage Logs
             </button>
-            <button onClick={() => setIsModalOpen(true)} className="flex items-center gap-1.5 px-3 py-1.5 text-[13px] font-medium text-white bg-primary rounded-md hover:bg-emerald-800 transition-colors shadow-sm">
-              <Plus size={16} />
-              Log Arrival
-            </button>
+            {user?.role === 'Admin' && (
+              <button onClick={() => setIsModalOpen(true)} className="flex items-center gap-1.5 px-3 py-1.5 text-[13px] font-medium text-white bg-primary rounded-md hover:bg-emerald-800 transition-colors shadow-sm">
+                <Plus size={16} />
+                Log Arrival
+              </button>
+            )}
           </div>
         </div>
         

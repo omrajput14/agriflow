@@ -1,10 +1,14 @@
-from fastapi import FastAPI, Depends, HTTPException
+from fastapi import FastAPI, Depends, HTTPException, status
 from fastapi.middleware.cors import CORSMiddleware
+from fastapi.security import OAuth2PasswordRequestForm
 from sqlalchemy.orm import Session
 from typing import List
+from datetime import timedelta
+import uuid
 
 from . import models, schemas
 from .database import engine, get_db
+from .auth import authenticate_user, create_access_token, get_current_user, get_password_hash, ACCESS_TOKEN_EXPIRE_MINUTES
 
 # Create all database tables based on models
 models.Base.metadata.create_all(bind=engine)
@@ -24,9 +28,41 @@ app.add_middleware(
     allow_headers=["*"],
 )
 
+@app.on_event("startup")
+def seed_users():
+    db = next(get_db())
+    if not db.query(models.User).first():
+        # Create seed users
+        users = [
+            models.User(id="USR-ADMIN", email="admin@agriflow.com", full_name="Admin Manager", role="Admin", hashed_password=get_password_hash("password123")),
+            models.User(id="USR-FARMER", email="farmer@agriflow.com", full_name="Wade Farmer", role="Farmer", hashed_password=get_password_hash("password123")),
+            models.User(id="USR-BUYER", email="buyer@agriflow.com", full_name="International Buyer", role="Buyer", hashed_password=get_password_hash("password123"))
+        ]
+        db.add_all(users)
+        db.commit()
+
 @app.get("/")
 def read_root():
     return {"message": "Welcome to the AgriFlow Enterprise API"}
+
+@app.post("/api/auth/login")
+def login_for_access_token(form_data: OAuth2PasswordRequestForm = Depends(), db: Session = Depends(get_db)):
+    user = authenticate_user(db, form_data.username, form_data.password)
+    if not user:
+        raise HTTPException(
+            status_code=status.HTTP_401_UNAUTHORIZED,
+            detail="Incorrect email or password",
+            headers={"WWW-Authenticate": "Bearer"},
+        )
+    access_token_expires = timedelta(minutes=ACCESS_TOKEN_EXPIRE_MINUTES)
+    access_token = create_access_token(
+        data={"sub": user.id, "role": user.role}, expires_delta=access_token_expires
+    )
+    return {"access_token": access_token, "token_type": "bearer", "user": {"id": user.id, "email": user.email, "role": user.role, "full_name": user.full_name}}
+
+@app.get("/api/auth/me")
+def read_users_me(current_user: models.User = Depends(get_current_user)):
+    return {"id": current_user.id, "email": current_user.email, "role": current_user.role, "full_name": current_user.full_name}
 
 # --- Farm Routes ---
 @app.get("/api/farms", response_model=List[schemas.Farm])

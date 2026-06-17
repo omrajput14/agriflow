@@ -3,8 +3,11 @@ import { motion, AnimatePresence } from 'framer-motion';
 import { useNavigate } from 'react-router-dom';
 import { Truck, Thermometer, Anchor, Package, Users, Settings, AlertCircle, ChevronRight, Activity, Search, ShieldCheck, FileText, Download, Plus, Tractor, HardDrive, Ship, ArrowUpRight, ArrowDownRight, X, Loader2, Filter } from 'lucide-react';
 import { getFarms, getHarvestLots, getShipments, createShipment, getBuyers } from '../services/api';
+import { useAuth } from '../context/AuthContext';
+import FarmerDashboard from '../components/FarmerDashboard';
 
 export default function Dashboard() {
+  const { user } = useAuth();
   const navigate = useNavigate();
   const [isModalOpen, setIsModalOpen] = useState(false);
   const [isSubmitting, setIsSubmitting] = useState(false);
@@ -56,6 +59,10 @@ export default function Dashboard() {
       setIsSubmitting(false);
     }
   };
+
+  if (user?.role === 'Farmer') {
+    return <FarmerDashboard lots={lots} />;
+  }
 
   return (
     <motion.div 

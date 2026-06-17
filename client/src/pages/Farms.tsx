@@ -2,8 +2,10 @@ import React, { useState, useEffect } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
 import { Search, Plus, Filter, MoreHorizontal, MapPin, Sprout, Tractor, Leaf, X, Loader2 } from 'lucide-react';
 import { getFarms, createFarm } from '../services/api';
+import { useAuth } from '../context/AuthContext';
 
 export default function Farms() {
+  const { user } = useAuth();
   const [farms, setFarms] = useState<any[]>([]);
   const [loading, setLoading] = useState(true);
   const [searchTerm, setSearchTerm] = useState('');
@@ -18,7 +20,12 @@ export default function Farms() {
   const loadFarms = async () => {
     try {
       setLoading(true);
-      const data = await getFarms();
+      let data = await getFarms();
+      // If the user is a Farmer, only show their own farm(s).
+      // Since the mock data doesn't map exact emails, we'll just show the first one or filter by owner.
+      if (user?.role === 'Farmer') {
+         data = data.filter((f: any) => f.owner.includes(user.full_name) || f.id === 'FRM-001');
+      }
       setFarms(data);
     } catch (error) {
       console.error("Failed to load farms", error);
@@ -69,16 +76,18 @@ export default function Farms() {
       {/* Page Header */}
       <div className="flex items-center justify-between mb-6">
         <div>
-          <h1 className="text-2xl font-semibold text-slate-900 tracking-tight">Farms & Harvest</h1>
+          <h1 className="text-2xl font-semibold text-slate-900 tracking-tight">{user?.role === 'Farmer' ? 'My Farm & Harvest' : 'Farms & Harvest'}</h1>
           <p className="text-[13px] text-slate-500 mt-0.5">Manage agricultural assets, crop cycles, and predicted yields.</p>
         </div>
-        <button 
-          onClick={() => setIsModalOpen(true)}
-          className="flex items-center gap-1.5 px-4 py-2 text-[13px] font-medium text-white bg-primary rounded-md hover:bg-emerald-800 transition-colors shadow-sm"
-        >
-          <Plus size={16} />
-          Register New Farm
-        </button>
+        {user?.role === 'Admin' && (
+          <button 
+            onClick={() => setIsModalOpen(true)}
+            className="flex items-center gap-1.5 px-4 py-2 text-[13px] font-medium text-white bg-primary rounded-md hover:bg-emerald-800 transition-colors shadow-sm"
+          >
+            <Plus size={16} />
+            Register New Farm
+          </button>
+        )}
       </div>
 
       {/* Summary KPI Cards */}
