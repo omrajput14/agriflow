@@ -9,6 +9,10 @@ SQLALCHEMY_DATABASE_URL = os.getenv(
     "postgresql://localhost/postgres"
 )
 
+# Render provides postgres:// but SQLAlchemy 2.0 requires postgresql://
+if SQLALCHEMY_DATABASE_URL.startswith("postgres://"):
+    SQLALCHEMY_DATABASE_URL = SQLALCHEMY_DATABASE_URL.replace("postgres://", "postgresql://", 1)
+
 # Create the SQLAlchemy engine
 engine = create_engine(SQLALCHEMY_DATABASE_URL)
 
