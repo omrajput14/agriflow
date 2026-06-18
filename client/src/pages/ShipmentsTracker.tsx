@@ -405,17 +405,46 @@ export default function ShipmentsTracker() {
             
             <div className="space-y-4 relative before:absolute before:inset-0 before:ml-[9px] before:-translate-x-px md:before:mx-auto md:before:translate-x-0 before:h-full before:w-0.5 before:bg-gradient-to-b before:from-transparent before:via-slate-200 before:to-transparent">
               
-              {/* Active Event */}
-              <div className="relative flex items-center justify-between md:justify-normal md:odd:flex-row-reverse group is-active">
-                <div className="flex items-center justify-center w-5 h-5 rounded-full border-2 border-white bg-blue-500 text-white shadow shrink-0 md:order-1 md:group-odd:-translate-x-1/2 md:group-even:translate-x-1/2 z-10 animate-pulse"></div>
-                <div className="w-[calc(100%-2.5rem)] md:w-[calc(50%-1.5rem)] p-3 rounded bg-blue-50 border border-blue-100 shadow-sm ml-4 md:ml-0">
-                  <div className="flex items-center justify-between mb-1">
-                    <span className="font-bold text-slate-900 text-[12px]">Container Sealed</span>
-                    <span className="text-[10px] text-slate-500 font-medium">Just Now</span>
+              {(() => {
+                const events = [];
+
+                if (activeShipment.status === 'Delivered') {
+                  events.push(
+                    { title: 'Delivered to Buyer', detail: `Cargo received by ${activeShipment.buyer_id}. Release signed.`, time: '2 days ago', active: true, color: 'emerald' },
+                    { title: 'Customs Cleared', detail: 'All documents verified. Phytosanitary cert accepted.', time: '3 days ago', active: false, color: 'slate' },
+                    { title: 'Arrived at Port', detail: 'Vessel docked at Rotterdam (RTM). Unloading scheduled.', time: '4 days ago', active: false, color: 'slate' },
+                    { title: 'Departed Origin', detail: 'Container sealed and loaded. Manifest logged.', time: '18 days ago', active: false, color: 'slate' },
+                  );
+                } else if (activeShipment.status === 'In Transit') {
+                  events.push(
+                    { title: 'In Transit — Atlantic', detail: `Reefer temp holding at ${activeShipment.internal_temp ?? '—'}°C. On schedule.`, time: 'Now', active: true, color: 'blue' },
+                    { title: 'Passed Suez Canal', detail: 'Vessel cleared canal transit. No delays reported.', time: '5 days ago', active: false, color: 'slate' },
+                    { title: 'Departed Origin Port', detail: 'Container sealed and loaded onto vessel.', time: '14 days ago', active: false, color: 'slate' },
+                  );
+                } else {
+                  events.push(
+                    { title: 'Container Packed', detail: 'Manifest logged. Awaiting dispatch clearance.', time: 'Just now', active: true, color: 'blue' },
+                    { title: 'Quality Inspection Passed', detail: 'Grade A — cleared for export.', time: '1 hour ago', active: false, color: 'slate' },
+                  );
+                }
+
+                return events.map((evt, idx) => (
+                  <div key={idx} className="relative flex items-start group">
+                    <div className={`flex items-center justify-center w-5 h-5 rounded-full border-2 border-white shadow shrink-0 z-10 ${
+                      evt.active ? `bg-${evt.color}-500 animate-pulse` : 'bg-slate-300'
+                    }`}></div>
+                    <div className={`ml-4 p-3 rounded border shadow-sm w-full ${
+                      evt.active ? `bg-${evt.color}-50 border-${evt.color}-100` : 'bg-white border-slate-100'
+                    }`}>
+                      <div className="flex items-center justify-between mb-1">
+                        <span className="font-bold text-slate-900 text-[12px]">{evt.title}</span>
+                        <span className="text-[10px] text-slate-500 font-medium">{evt.time}</span>
+                      </div>
+                      <div className="text-slate-600 text-[11px] leading-relaxed">{evt.detail}</div>
+                    </div>
                   </div>
-                  <div className="text-slate-600 text-[11px] leading-relaxed">Manifest logged. Awaiting dispatch.</div>
-                </div>
-              </div>
+                ));
+              })()}
 
             </div>
           </div>

@@ -5,3 +5,7 @@ psycopg2-binary==2.9.9
 pydantic==2.6.4
 python-dotenv==1.0.1
 alembic==1.13.1
+slowapi==0.1.9
+python-jose[cryptography]==3.3.0
+bcrypt==3.2.2
+python-multipart==0.0.9

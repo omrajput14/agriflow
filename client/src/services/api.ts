@@ -70,18 +70,27 @@ const MOCK_SHIPMENTS = [
   { id: 'SHP-001', buyer_id: 'BUY-001', container_number: 'CON-889', status: 'In Transit', current_location: 'Mid-Atlantic', temperature_c: 1.8 }
 ];
 
+// Falls back to mock data ONLY when the backend is unreachable (timeout / network).
+// Real HTTP errors (4xx / 5xx) propagate so the UI can show them.
 const fetchWithFallback = async (url: string, mockData: any) => {
   const controller = new AbortController();
   const timeoutId = setTimeout(() => controller.abort(), 1500); // 1.5s timeout for fast UI fallback
   try {
     const response = await fetch(url, { headers: getAuthHeaders(), signal: controller.signal });
     clearTimeout(timeoutId);
-    if (!response.ok) throw new Error('API Error');
+    if (!response.ok) {
+      // Surface real server errors instead of masking them with mock data.
+      throw new Error(`API ${response.status} ${response.statusText}`);
+    }
     return await response.json();
-  } catch (error) {
+  } catch (error: any) {
     clearTimeout(timeoutId);
-    console.warn(`Backend fetch failed for ${url}. Using mock data.`);
-    return mockData;
+    if (error?.name === 'AbortError') {
+      console.warn(`Backend timeout for ${url}. Using mock data for prototype demo.`);
+      return mockData;
+    }
+    // Re-throw real errors (auth, validation, server).
+    throw error;
   }
 };
 
@@ -122,7 +131,7 @@ export const getShipmentTelemetry = async (id: string) => {
   return response.json();
 };
 export const advanceShipment = async (id: string) => {
-  const response = await fetch(`${API_URL}/shipments/${id}/advance`, { method: 'POST', headers: getAuthHeaders() });
+  const response = await fetch(`${API_URL}/shipments/${id}/advance`, { method: 'PATCH', headers: getAuthHeaders() });
   if (!response.ok) throw new Error('Failed to advance shipment');
   return response.json();
 };

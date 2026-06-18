@@ -1,6 +1,6 @@
 import React from 'react';
 import { NavLink, Outlet, useLocation } from 'react-router-dom';
-import { LayoutDashboard, Tractor, Package, Ship, Users, Settings, Bell, Search, LogOut, ChevronRight, LineChart } from 'lucide-react';
+import { LayoutDashboard, Tractor, Package, Ship, Users, Settings, Bell, Search, LogOut, ChevronRight, LineChart, ShieldCheck, Navigation, TrendingUp } from 'lucide-react';
 import { useAuth } from '../context/AuthContext';
 
 export default function DashboardLayout() {
@@ -11,9 +11,12 @@ export default function DashboardLayout() {
     { name: user?.role === 'Farmer' ? 'My Dashboard' : 'Command Center', href: '/', icon: LayoutDashboard, roles: ['Admin', 'Exporter', 'Buyer', 'Operations', 'Farmer'] },
     { name: user?.role === 'Farmer' ? 'My Farm & Harvest' : 'Farms & Harvest', href: '/farms', icon: Tractor, roles: ['Admin', 'Farmer', 'Operations'] },
     { name: 'Packhouse', href: '/packhouse', icon: Package, roles: ['Admin', 'Operations'] },
+    { name: 'Quality Control', href: '/compliance', icon: ShieldCheck, roles: ['Admin', 'Operations'] },
     { name: 'Shipments', href: '/shipments', icon: Ship, roles: ['Admin', 'Exporter', 'Buyer'], badge: '3' },
+    { name: 'Route Optimizer', href: '/route-optimizer', icon: Navigation, roles: ['Admin', 'Exporter'] },
     { name: 'Market Intel', href: '/market-intel', icon: LineChart, roles: ['Admin', 'Exporter'] },
     { name: 'Buyers CRM', href: '/buyers', icon: Users, roles: ['Admin', 'Exporter'] },
+    { name: 'Investor KPIs', href: '/investor-kpi', icon: TrendingUp, roles: ['Admin'] },
   ];
 
   const navigation = allNavigation.filter(item => user && item.roles.includes(user.role));
@@ -21,10 +24,16 @@ export default function DashboardLayout() {
   const getPageTitle = () => {
     switch (location.pathname) {
       case '/': return 'Command Center';
+      case '/investor-kpi': return 'Investor KPIs';
       case '/farms': return 'Farms & Harvest';
       case '/packhouse': return 'Packhouse';
       case '/shipments': return 'Shipments Tracker';
       case '/buyers': return 'Buyers CRM';
+      case '/compliance': return 'Quality Control';
+      case '/route-optimizer': return 'Route Optimizer';
+      case '/market-intel': return 'Market Intel';
+      case '/export-doc': return 'Export Documents';
+      case '/export-report': return 'Export Report';
       default: return 'Command Center';
     }
   };

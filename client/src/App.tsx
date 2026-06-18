@@ -10,6 +10,9 @@ import BuyersCRM from './pages/BuyersCRM';
 import ExportDocument from './pages/ExportDocument';
 import ExportReport from './pages/ExportReport';
 import MarketIntelligence from './pages/MarketIntelligence';
+import QualityGrading from './pages/QualityGrading';
+import RouteOptimization from './pages/RouteOptimization';
+import InvestorDashboard from './pages/InvestorDashboard';
 import Login from './pages/Login';
 import { AuthProvider, useAuth } from './context/AuthContext';
 
@@ -45,6 +48,9 @@ function App() {
               <Route path="export-doc" element={<ExportDocument />} />
               <Route path="export-report" element={<ExportReport />} />
               <Route path="market-intel" element={<MarketIntelligence />} />
+              <Route path="compliance" element={<QualityGrading />} />
+              <Route path="route-optimizer" element={<RouteOptimization />} />
+              <Route path="investor-kpi" element={<InvestorDashboard />} />
               <Route path="*" element={<Navigate to="/" replace />} />
             </Route>
           </Routes>

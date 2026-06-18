@@ -1,7 +1,7 @@
 import React, { useState, useEffect } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
 import { useNavigate } from 'react-router-dom';
-import { Truck, Thermometer, Anchor, Package, Users, Settings, AlertCircle, ChevronRight, Activity, Search, ShieldCheck, FileText, Download, Plus, Tractor, HardDrive, Ship, ArrowUpRight, ArrowDownRight, X, Loader2, Filter } from 'lucide-react';
+import { Truck, Thermometer, Anchor, Package, Users, Settings, AlertCircle, ChevronRight, Activity, Search, ShieldCheck, FileText, Download, Plus, Tractor, HardDrive, Ship, ArrowUpRight, ArrowDownRight, X, Loader2, Filter, CheckCircle2 } from 'lucide-react';
 import { getFarms, getHarvestLots, getShipments, createShipment, getBuyers } from '../services/api';
 import { useAuth } from '../context/AuthContext';
 import FarmerDashboard from '../components/FarmerDashboard';
@@ -83,10 +83,22 @@ export default function Dashboard() {
             <Download size={16} />
             Export Report
           </button>
-          <button onClick={() => setIsModalOpen(true)} className="flex items-center gap-1.5 px-3 py-1.5 text-[13px] font-medium text-white bg-blue-600 rounded-md hover:bg-blue-700 transition-colors shadow-sm">
-            <Plus size={14} />
-            New Shipment
-          </button>
+          {user && ['Admin', 'Operations'].includes(user.role) ? (
+            <button onClick={() => setIsModalOpen(true)} className="flex items-center gap-1.5 px-3 py-1.5 text-[13px] font-medium text-white bg-blue-600 rounded-md hover:bg-blue-700 transition-colors shadow-sm">
+              <Plus size={14} />
+              New Shipment
+            </button>
+          ) : (
+            <div className="relative group">
+              <button disabled className="flex items-center gap-1.5 px-3 py-1.5 text-[13px] font-medium text-slate-400 bg-slate-100 border border-slate-200 rounded-md cursor-not-allowed">
+                <Plus size={14} />
+                New Shipment
+              </button>
+              <div className="absolute bottom-full mb-2 left-1/2 -translate-x-1/2 px-2 py-1 bg-slate-900 text-white text-[11px] rounded opacity-0 group-hover:opacity-100 transition-opacity whitespace-nowrap pointer-events-none">
+                Admin only
+              </div>
+            </div>
+          )}
         </div>
       </div>
       
@@ -224,28 +236,53 @@ export default function Dashboard() {
         <div className="flex flex-col gap-6 h-[400px]">
           
           {/* Alert Widget */}
-          <div className="bg-white rounded-lg border border-red-200 shadow-sm flex flex-col overflow-hidden relative">
-            <div className="absolute top-0 left-0 w-1 h-full bg-red-500"></div>
-            <div className="px-5 py-3 border-b border-slate-100 bg-white">
-              <div className="flex items-center gap-2">
-                <span className="w-2 h-2 rounded-full bg-red-500 animate-pulse"></span>
-                <h3 className="text-[13px] font-semibold text-slate-900 uppercase tracking-wide">Critical Alerts</h3>
+          {(() => {
+            const alertShipment = shipments.find(s => s.status === 'In Transit' && s.internal_temp);
+            if (!alertShipment) {
+              return (
+                <div className="bg-white rounded-lg border border-slate-200 shadow-sm flex flex-col overflow-hidden">
+                  <div className="px-5 py-3 border-b border-slate-100 bg-white">
+                    <div className="flex items-center gap-2">
+                      <span className="w-2 h-2 rounded-full bg-emerald-500"></span>
+                      <h3 className="text-[13px] font-semibold text-slate-900 uppercase tracking-wide">System Status</h3>
+                    </div>
+                  </div>
+                  <div className="p-5 flex flex-col items-center justify-center text-center">
+                    <CheckCircle2 size={24} className="text-emerald-500 mb-2" />
+                    <h4 className="text-[14px] font-semibold text-slate-900 mb-1">No active alerts</h4>
+                    <p className="text-[12px] text-slate-500">All shipments operating within normal parameters.</p>
+                  </div>
+                </div>
+              );
+            }
+            const tempWarning = alertShipment.internal_temp < 2.0;
+            return (
+              <div className={`bg-white rounded-lg border shadow-sm flex flex-col overflow-hidden relative ${tempWarning ? 'border-red-200' : 'border-amber-200'}`}>
+                <div className={`absolute top-0 left-0 w-1 h-full ${tempWarning ? 'bg-red-500' : 'bg-amber-500'}`}></div>
+                <div className="px-5 py-3 border-b border-slate-100 bg-white">
+                  <div className="flex items-center gap-2">
+                    <span className={`w-2 h-2 rounded-full animate-pulse ${tempWarning ? 'bg-red-500' : 'bg-amber-500'}`}></span>
+                    <h3 className="text-[13px] font-semibold text-slate-900 uppercase tracking-wide">{tempWarning ? 'Critical Alert' : 'Advisory'}</h3>
+                  </div>
+                </div>
+                <div className="p-5 flex flex-col">
+                  <h4 className="text-[14px] font-semibold text-slate-900 mb-1">{tempWarning ? 'Temperature Deviation' : 'Temperature Advisory'}</h4>
+                  <p className="text-[13px] text-slate-600 leading-relaxed mb-4">
+                    Container <span className="font-mono text-xs bg-slate-100 px-1 rounded">{alertShipment.container_number}</span> at {alertShipment.internal_temp}°C
+                    {tempWarning ? ' (below 2.0°C threshold)' : ' (within tolerance)'}. Shipment {alertShipment.id}.
+                  </p>
+                  <div className="flex gap-2 mt-auto">
+                    <button onClick={() => navigate('/shipments')} className={`flex-1 text-[12px] font-medium text-white px-3 py-1.5 rounded transition-colors shadow-sm ${tempWarning ? 'bg-red-600 hover:bg-red-700' : 'bg-amber-600 hover:bg-amber-700'}`}>
+                      View Shipment
+                    </button>
+                    <button onClick={() => navigate('/compliance')} className="flex-1 text-[12px] font-medium text-slate-700 bg-white border border-slate-300 px-3 py-1.5 rounded hover:bg-slate-50 transition-colors shadow-sm">
+                      View Logs
+                    </button>
+                  </div>
+                </div>
               </div>
-            </div>
-            <div className="p-5 flex flex-col">
-              <h4 className="text-[14px] font-semibold text-slate-900 mb-1">Temperature Deviation</h4>
-              <p className="text-[13px] text-slate-600 leading-relaxed mb-4">Container <span className="font-mono text-xs bg-slate-100 px-1 rounded">CON-889</span> dropped to 1.8°C (Threshold: 2.0°C). Cargo: Bananas.</p>
-              
-              <div className="flex gap-2 mt-auto">
-                <button onClick={() => alert('Alert Acknowledged! IoT monitoring continues.')} className="flex-1 text-[12px] font-medium text-white bg-red-600 px-3 py-1.5 rounded hover:bg-red-700 transition-colors shadow-sm">
-                  Acknowledge
-                </button>
-                <button onClick={() => window.location.href = '/packhouse'} className="flex-1 text-[12px] font-medium text-slate-700 bg-white border border-slate-300 px-3 py-1.5 rounded hover:bg-slate-50 transition-colors shadow-sm">
-                  View Logs
-                </button>
-              </div>
-            </div>
-          </div>
+            );
+          })()}
           
           {/* Action Quick Links */}
           <div className="bg-white rounded-lg border border-slate-200 shadow-sm flex-1 flex flex-col">
