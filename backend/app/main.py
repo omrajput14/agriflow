@@ -5,6 +5,8 @@ from sqlalchemy.orm import Session
 from typing import List
 from datetime import timedelta
 import uuid
+import time
+import logging
 
 from slowapi import Limiter, _rate_limit_exceeded_handler
 from slowapi.util import get_remote_address
@@ -14,11 +16,10 @@ from . import models, schemas
 from .database import engine, get_db
 from .auth import authenticate_user, create_access_token, get_current_user, get_password_hash, ACCESS_TOKEN_EXPIRE_MINUTES
 
+logger = logging.getLogger(__name__)
+
 # Roles that are allowed to perform write operations.
 WRITE_ROLES = {"Admin", "Operations"}
-
-# Create all database tables based on models
-models.Base.metadata.create_all(bind=engine)
 
 limiter = Limiter(key_func=get_remote_address)
 
@@ -48,17 +49,36 @@ app.add_middleware(
 )
 
 @app.on_event("startup")
-def seed_users():
-    db = next(get_db())
-    if not db.query(models.User).first():
-        # Create seed users
-        users = [
-            models.User(id="USR-ADMIN", email="admin@agriflow.com", full_name="Admin Manager", role="Admin", hashed_password=get_password_hash("password123")),
-            models.User(id="USR-FARMER", email="farmer@agriflow.com", full_name="Wade Farmer", role="Farmer", hashed_password=get_password_hash("password123")),
-            models.User(id="USR-BUYER", email="buyer@agriflow.com", full_name="International Buyer", role="Buyer", hashed_password=get_password_hash("password123"))
-        ]
-        db.add_all(users)
-        db.commit()
+def startup():
+    # Retry DB connection — Render's free-tier DB may still be provisioning
+    for attempt in range(5):
+        try:
+            models.Base.metadata.create_all(bind=engine)
+            logger.info("Database tables created successfully.")
+            break
+        except Exception as e:
+            wait = 2 ** attempt  # 1, 2, 4, 8, 16 seconds
+            logger.warning(f"DB connection attempt {attempt + 1}/5 failed: {e}. Retrying in {wait}s...")
+            time.sleep(wait)
+    else:
+        logger.error("Could not connect to database after 5 attempts. Tables not created.")
+        return
+
+    # Seed demo users on first boot
+    try:
+        db = next(get_db())
+        if not db.query(models.User).first():
+            users = [
+                models.User(id="USR-ADMIN", email="admin@agriflow.com", full_name="Admin Manager", role="Admin", hashed_password=get_password_hash("password123")),
+                models.User(id="USR-FARMER", email="farmer@agriflow.com", full_name="Wade Farmer", role="Farmer", hashed_password=get_password_hash("password123")),
+                models.User(id="USR-BUYER", email="buyer@agriflow.com", full_name="International Buyer", role="Buyer", hashed_password=get_password_hash("password123"))
+            ]
+            db.add_all(users)
+            db.commit()
+            logger.info("Seeded 3 demo users.")
+    except Exception as e:
+        logger.error(f"Failed to seed users: {e}")
+
 
 def require_write_role(current_user: models.User = Depends(get_current_user)) -> models.User:
     """RBAC: only Admin/Operations can mutate data."""
