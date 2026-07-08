@@ -63,79 +63,87 @@ export default function InvestorDashboard() {
   }, []);
 
   return (
-    <div className="space-y-6">
-      <div className="flex justify-between items-center">
+    <motion.div 
+      initial={{ opacity: 0, y: 10 }}
+      animate={{ opacity: 1, y: 0 }}
+      exit={{ opacity: 0, y: -10 }}
+      transition={{ duration: 0.2 }}
+      className="flex-1 overflow-auto p-6 absolute inset-0 bg-[#F8FAFC]"
+    >
+      {/* Page Title & Global Actions */}
+      <div className="flex items-center justify-between mb-6">
         <div>
-          <h1 className="text-3xl font-bold text-slate-900">
-            Investor Assessment
-          </h1>
-          <p className="text-slate-500 mt-1">Commercialization Metrics & Strategic Scorecard</p>
+          <h1 className="text-2xl font-semibold text-slate-900 tracking-tight">Investor Assessment</h1>
+          <p className="text-[13px] text-slate-500 mt-0.5">Commercialization Metrics & Strategic Scorecard</p>
         </div>
-        <div className="flex items-center space-x-2 bg-emerald-50 border border-emerald-200 px-4 py-2 rounded-lg">
-          <Activity className="w-5 h-5 text-emerald-600 animate-pulse" />
-          <span className="text-emerald-700 font-semibold text-sm">Live Telemetry</span>
+        <div className="flex items-center gap-2 px-3 py-1.5 bg-emerald-50 border border-emerald-200 rounded-md">
+          <Activity className="w-4 h-4 text-emerald-600 animate-pulse" />
+          <span className="text-[13px] font-medium text-emerald-700">Live Telemetry</span>
         </div>
       </div>
 
       {/* Top Metrics Row */}
-      <div className="grid grid-cols-1 md:grid-cols-4 gap-4">
-        <div className="bg-white border border-slate-200 rounded-xl p-5 shadow-sm hover:shadow-md transition-shadow">
-          <div className="flex justify-between items-start mb-2">
-            <h3 className="text-slate-500 text-sm font-medium">Overall Score</h3>
-            <div className="bg-emerald-100 p-1.5 rounded-md">
-              <TrendingUp className="w-4 h-4 text-emerald-600" />
-            </div>
+      <div className="grid grid-cols-1 md:grid-cols-4 gap-4 mb-6">
+        <div className="bg-white p-4 rounded-lg border border-slate-200 shadow-sm flex flex-col justify-between hover:border-slate-300 transition-colors cursor-default">
+          <div className="flex items-center justify-between mb-3">
+            <span className="text-[11px] font-semibold text-slate-500 uppercase tracking-wider">Overall Score</span>
+            <span className="p-1 bg-emerald-50 rounded text-emerald-600"><TrendingUp size={14} /></span>
           </div>
-          <div className="text-3xl font-bold text-slate-900">8.75<span className="text-lg text-slate-400 font-medium">/10</span></div>
-          <div className="text-emerald-600 text-xs mt-1.5 font-semibold">Strong Investment Profile</div>
+          <div>
+            <div className="flex items-end gap-1">
+              <h3 className="text-2xl font-semibold text-slate-900 tracking-tight leading-none">8.75</h3>
+              <span className="text-[13px] font-medium text-slate-500 mb-0.5">/10</span>
+            </div>
+            <div className="text-[11px] font-medium text-emerald-600 mt-2">Strong Investment Profile</div>
+          </div>
         </div>
 
-        <div className="bg-white border border-slate-200 rounded-xl p-5 shadow-sm hover:shadow-md transition-shadow">
-          <div className="flex justify-between items-start mb-2">
-            <h3 className="text-slate-500 text-sm font-medium">API Requests (Mock)</h3>
-            <div className="bg-blue-100 p-1.5 rounded-md">
-              <Zap className="w-4 h-4 text-blue-600" />
-            </div>
+        <div className="bg-white p-4 rounded-lg border border-slate-200 shadow-sm flex flex-col justify-between hover:border-slate-300 transition-colors cursor-default">
+          <div className="flex items-center justify-between mb-3">
+            <span className="text-[11px] font-semibold text-slate-500 uppercase tracking-wider">API Requests (Mock)</span>
+            <span className="p-1 bg-blue-50 rounded text-blue-600"><Zap size={14} /></span>
           </div>
-          <div className="text-3xl font-bold text-slate-900">{telemetry.requests.toLocaleString()}</div>
-          <div className="text-slate-500 text-xs mt-1.5 font-medium">Protected by SlowAPI limits</div>
+          <div>
+            <h3 className="text-2xl font-semibold text-slate-900 tracking-tight leading-none">{telemetry.requests.toLocaleString()}</h3>
+            <div className="text-[11px] font-medium text-slate-500 mt-2">Protected by SlowAPI limits</div>
+          </div>
         </div>
 
-        <div className="bg-white border border-slate-200 rounded-xl p-5 shadow-sm hover:shadow-md transition-shadow">
-          <div className="flex justify-between items-start mb-2">
-            <h3 className="text-slate-500 text-sm font-medium">System Latency</h3>
-            <div className="bg-purple-100 p-1.5 rounded-md">
-              <Activity className="w-4 h-4 text-purple-600" />
-            </div>
+        <div className="bg-white p-4 rounded-lg border border-slate-200 shadow-sm flex flex-col justify-between hover:border-slate-300 transition-colors cursor-default">
+          <div className="flex items-center justify-between mb-3">
+            <span className="text-[11px] font-semibold text-slate-500 uppercase tracking-wider">System Latency</span>
+            <span className="p-1 bg-purple-50 rounded text-purple-600"><Activity size={14} /></span>
           </div>
-          <div className="text-3xl font-bold text-slate-900">{telemetry.latency}ms</div>
-          <div className="text-emerald-600 text-xs mt-1.5 font-semibold">PostgreSQL Partitioning Active</div>
+          <div>
+            <h3 className="text-2xl font-semibold text-slate-900 tracking-tight leading-none">{telemetry.latency}ms</h3>
+            <div className="text-[11px] font-medium text-emerald-600 mt-2">PostgreSQL Partitioning Active</div>
+          </div>
         </div>
 
-        <div className="bg-white border border-slate-200 rounded-xl p-5 shadow-sm hover:shadow-md transition-shadow">
-          <div className="flex justify-between items-start mb-2">
-            <h3 className="text-slate-500 text-sm font-medium">Est. Enterprise ACV</h3>
-            <div className="bg-amber-100 p-1.5 rounded-md">
-              <DollarSign className="w-4 h-4 text-amber-600" />
-            </div>
+        <div className="bg-white p-4 rounded-lg border border-slate-200 shadow-sm flex flex-col justify-between hover:border-slate-300 transition-colors cursor-default">
+          <div className="flex items-center justify-between mb-3">
+            <span className="text-[11px] font-semibold text-slate-500 uppercase tracking-wider">Est. Enterprise ACV</span>
+            <span className="p-1 bg-amber-50 rounded text-amber-600"><DollarSign size={14} /></span>
           </div>
-          <div className="text-3xl font-bold text-slate-900">$11k</div>
-          <div className="text-slate-500 text-xs mt-1.5 font-medium">Per Exporter Account</div>
+          <div>
+            <h3 className="text-2xl font-semibold text-slate-900 tracking-tight leading-none">$11k</h3>
+            <div className="text-[11px] font-medium text-slate-500 mt-2">Per Exporter Account</div>
+          </div>
         </div>
       </div>
 
       {/* Main Charts Row */}
-      <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
+      <div className="grid grid-cols-1 lg:grid-cols-2 gap-6 mb-6">
         
         {/* Market Opportunity */}
         <motion.div 
-          initial={{ opacity: 0, y: 20 }}
+          initial={{ opacity: 0, y: 10 }}
           animate={{ opacity: 1, y: 0 }}
-          className="bg-white border border-slate-200 rounded-xl p-6 shadow-sm flex flex-col"
+          className="bg-white rounded-lg border border-slate-200 shadow-sm p-5 flex flex-col"
         >
-          <div className="flex items-center space-x-2 mb-6">
-            <BarChart4 className="w-5 h-5 text-emerald-600" />
-            <h2 className="text-lg font-bold text-slate-900">Market Size Opportunity</h2>
+          <div className="flex items-center space-x-2 mb-6 pb-4 border-b border-slate-100">
+            <BarChart4 className="w-4 h-4 text-emerald-600" />
+            <h2 className="text-[15px] font-semibold text-slate-900 tracking-tight">Market Size Opportunity</h2>
           </div>
           <div className="flex-1 min-h-[250px] w-full">
             <ResponsiveContainer width="100%" height="100%">
@@ -146,38 +154,38 @@ export default function InvestorDashboard() {
               >
                 <CartesianGrid strokeDasharray="3 3" stroke="#e2e8f0" horizontal={false} />
                 <XAxis type="number" hide />
-                <YAxis dataKey="name" type="category" stroke="#64748b" width={180} tick={{fill: '#64748b', fontSize: 12, fontWeight: 500}} />
+                <YAxis dataKey="name" type="category" stroke="#64748b" width={180} tick={{fill: '#64748b', fontSize: 11, fontWeight: 500}} />
                 <RechartsTooltip 
                   cursor={{fill: '#f8fafc'}}
-                  contentStyle={{ backgroundColor: '#ffffff', borderColor: '#e2e8f0', color: '#0f172a', borderRadius: '8px', boxShadow: '0 4px 6px -1px rgb(0 0 0 / 0.1)' }}
+                  contentStyle={{ backgroundColor: '#ffffff', borderColor: '#e2e8f0', color: '#0f172a', borderRadius: '6px', boxShadow: '0 4px 6px -1px rgb(0 0 0 / 0.1)', fontSize: '12px' }}
                   itemStyle={{ color: '#059669', fontWeight: 600 }}
                   formatter={(value: number) => [`$${(value/1000).toFixed(1)} Billion`, 'Market Size']}
                 />
-                <Bar dataKey="value" fill="#10b981" radius={[0, 4, 4, 0]} barSize={32} />
+                <Bar dataKey="value" fill="#10b981" radius={[0, 4, 4, 0]} barSize={24} />
               </BarChart>
             </ResponsiveContainer>
           </div>
-          <div className="mt-4 pt-4 border-t border-slate-100 flex justify-between text-sm">
-            <div className="text-emerald-700 font-semibold text-center w-full bg-emerald-50 py-2 rounded-md">Focus: Emerging Markets (India & SEA)</div>
+          <div className="mt-4 pt-4 border-t border-slate-100 flex justify-between">
+            <div className="text-[13px] text-emerald-700 font-medium text-center w-full bg-emerald-50 py-2 rounded-md">Focus: Emerging Markets (India & SEA)</div>
           </div>
         </motion.div>
 
         {/* Strategic Scorecard */}
         <motion.div 
-          initial={{ opacity: 0, y: 20 }}
+          initial={{ opacity: 0, y: 10 }}
           animate={{ opacity: 1, y: 0 }}
           transition={{ delay: 0.1 }}
-          className="bg-white border border-slate-200 rounded-xl p-6 shadow-sm flex flex-col"
+          className="bg-white rounded-lg border border-slate-200 shadow-sm p-5 flex flex-col"
         >
-          <div className="flex items-center space-x-2 mb-4">
-            <Activity className="w-5 h-5 text-purple-600" />
-            <h2 className="text-lg font-bold text-slate-900">Strategic Platform Scorecard</h2>
+          <div className="flex items-center space-x-2 mb-4 pb-4 border-b border-slate-100">
+            <Activity className="w-4 h-4 text-purple-600" />
+            <h2 className="text-[15px] font-semibold text-slate-900 tracking-tight">Strategic Platform Scorecard</h2>
           </div>
           <div className="flex-1 min-h-[250px] w-full -ml-4">
             <ResponsiveContainer width="100%" height="100%">
               <RadarChart cx="50%" cy="50%" outerRadius="70%" data={scorecardData}>
                 <PolarGrid stroke="#e2e8f0" />
-                <PolarAngleAxis dataKey="subject" tick={{ fill: '#64748b', fontSize: 12, fontWeight: 500 }} />
+                <PolarAngleAxis dataKey="subject" tick={{ fill: '#64748b', fontSize: 11, fontWeight: 500 }} />
                 <PolarRadiusAxis angle={30} domain={[0, 10]} stroke="#cbd5e1" tick={false} axisLine={false} />
                 <Radar
                   name="AgriFlow Score"
@@ -188,7 +196,7 @@ export default function InvestorDashboard() {
                   fillOpacity={0.2}
                 />
                 <RechartsTooltip 
-                  contentStyle={{ backgroundColor: '#ffffff', borderColor: '#e2e8f0', color: '#0f172a', borderRadius: '8px', boxShadow: '0 4px 6px -1px rgb(0 0 0 / 0.1)' }}
+                  contentStyle={{ backgroundColor: '#ffffff', borderColor: '#e2e8f0', color: '#0f172a', borderRadius: '6px', boxShadow: '0 4px 6px -1px rgb(0 0 0 / 0.1)', fontSize: '12px' }}
                   itemStyle={{ color: '#9333ea', fontWeight: 600 }}
                 />
               </RadarChart>
@@ -199,24 +207,24 @@ export default function InvestorDashboard() {
 
       {/* Core Moats */}
       <motion.div 
-        initial={{ opacity: 0, y: 20 }}
+        initial={{ opacity: 0, y: 10 }}
         animate={{ opacity: 1, y: 0 }}
         transition={{ delay: 0.2 }}
-        className="bg-white border border-slate-200 rounded-xl p-6 shadow-sm"
+        className="bg-white rounded-lg border border-slate-200 shadow-sm p-5"
       >
-        <h2 className="text-lg font-bold text-slate-900 mb-6">Competitive Advantages & Moats</h2>
+        <h2 className="text-[15px] font-semibold text-slate-900 tracking-tight mb-5 pb-4 border-b border-slate-100">Competitive Advantages & Moats</h2>
         <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
           {moats.map((moat, idx) => (
-            <div key={idx} className="bg-slate-50 border border-slate-200 p-5 rounded-xl hover:border-emerald-300 hover:shadow-md transition-all">
-              <div className="bg-white w-10 h-10 rounded-lg shadow-sm border border-slate-200 flex items-center justify-center mb-4">
-                {moat.icon}
+            <div key={idx} className="bg-[#F8FAFC] border border-slate-200 p-4 rounded-lg hover:border-emerald-300 hover:shadow-sm transition-all">
+              <div className="bg-white w-8 h-8 rounded shadow-sm border border-slate-200 flex items-center justify-center mb-3">
+                {React.cloneElement(moat.icon as React.ReactElement, { className: "w-4 h-4" })}
               </div>
-              <h3 className="text-slate-900 font-bold mb-2">{moat.title}</h3>
-              <p className="text-slate-600 text-sm leading-relaxed">{moat.description}</p>
+              <h3 className="text-[13px] font-semibold text-slate-900 mb-1.5">{moat.title}</h3>
+              <p className="text-[12px] text-slate-500 leading-relaxed">{moat.description}</p>
             </div>
           ))}
         </div>
       </motion.div>
-    </div>
+    </motion.div>
   );
 }
