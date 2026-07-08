@@ -2,6 +2,13 @@ from pydantic import BaseModel
 from typing import List, Optional
 from datetime import datetime
 
+# --- User Schemas ---
+class UserCreate(BaseModel):
+    email: str
+    password: str
+    full_name: str
+    role: str
+
 # --- Farm Schemas ---
 class FarmBase(BaseModel):
     name: str

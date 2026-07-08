@@ -14,6 +14,7 @@ import QualityGrading from './pages/QualityGrading';
 import RouteOptimization from './pages/RouteOptimization';
 import InvestorDashboard from './pages/InvestorDashboard';
 import Login from './pages/Login';
+import Register from './pages/Register';
 import { AuthProvider, useAuth } from './context/AuthContext';
 
 const ProtectedRoute = ({ children }: { children: React.ReactNode }) => {
@@ -38,6 +39,7 @@ function App() {
         <AnimatePresence mode="wait">
           <Routes>
             <Route path="/login" element={<Login />} />
+            <Route path="/register" element={<Register />} />
             
             <Route path="/" element={<ProtectedRoute><DashboardLayout /></ProtectedRoute>}>
               <Route index element={<Dashboard />} />

@@ -64,22 +64,6 @@ def startup():
         logger.error("Could not connect to database after 5 attempts. Tables not created.")
         return
 
-    # Seed demo users on first boot
-    try:
-        db = next(get_db())
-        if not db.query(models.User).first():
-            users = [
-                models.User(id="USR-ADMIN", email="admin@agriflow.com", full_name="Admin Manager", role="Admin", hashed_password=get_password_hash("password123")),
-                models.User(id="USR-FARMER", email="farmer@agriflow.com", full_name="Wade Farmer", role="Farmer", hashed_password=get_password_hash("password123")),
-                models.User(id="USR-BUYER", email="buyer@agriflow.com", full_name="International Buyer", role="Buyer", hashed_password=get_password_hash("password123"))
-            ]
-            db.add_all(users)
-            db.commit()
-            logger.info("Seeded 3 demo users.")
-    except Exception as e:
-        logger.error(f"Failed to seed users: {e}")
-
-
 def require_write_role(current_user: models.User = Depends(get_current_user)) -> models.User:
     """RBAC: only Admin/Operations can mutate data."""
     if current_user.role not in WRITE_ROLES:
@@ -109,6 +93,27 @@ def login_for_access_token(request: Request, form_data: OAuth2PasswordRequestFor
         data={"sub": user.id, "role": user.role}, expires_delta=access_token_expires
     )
     return {"access_token": access_token, "token_type": "bearer", "user": {"id": user.id, "email": user.email, "role": user.role, "full_name": user.full_name}}
+
+@app.post("/api/auth/register")
+@limiter.limit("5/minute")
+def register_user(request: Request, user: schemas.UserCreate, db: Session = Depends(get_db)):
+    db_user = db.query(models.User).filter(models.User.email == user.email).first()
+    if db_user:
+        raise HTTPException(status_code=400, detail="Email already registered")
+    
+    import uuid
+    new_user_id = f"USR-{str(uuid.uuid4())[:8].upper()}"
+    new_user = models.User(
+        id=new_user_id,
+        email=user.email,
+        full_name=user.full_name,
+        role=user.role,
+        hashed_password=get_password_hash(user.password)
+    )
+    db.add(new_user)
+    db.commit()
+    db.refresh(new_user)
+    return {"message": "User registered successfully"}
 
 @app.get("/api/auth/me")
 def read_users_me(current_user: models.User = Depends(get_current_user)):

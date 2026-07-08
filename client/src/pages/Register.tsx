@@ -1,16 +1,18 @@
 import React, { useState } from 'react';
 import { motion } from 'framer-motion';
 import { useNavigate, Link } from 'react-router-dom';
-import { useAuth } from '../context/AuthContext';
-import { login as apiLogin } from '../services/api';
-import { Lock, Mail, Loader2, AlertCircle } from 'lucide-react';
+import { register as apiRegister } from '../services/api';
+import { Lock, Mail, User, Loader2, AlertCircle, Shield } from 'lucide-react';
 
-export default function Login() {
-  const [email, setEmail] = useState('');
-  const [password, setPassword] = useState('');
+export default function Register() {
+  const [formData, setFormData] = useState({
+    full_name: '',
+    email: '',
+    password: '',
+    role: 'Admin'
+  });
   const [error, setError] = useState('');
   const [isLoading, setIsLoading] = useState(false);
-  const { login } = useAuth();
   const navigate = useNavigate();
 
   const handleSubmit = async (e: React.FormEvent) => {
@@ -19,86 +21,18 @@ export default function Login() {
     setIsLoading(true);
 
     try {
-      const response = await apiLogin({ email, password });
-      login(response.access_token, response.user);
-      navigate('/');
-    } catch (err) {
-      setError('Invalid email or password. Make sure the backend is running.');
+      await apiRegister(formData);
+      navigate('/login');
+    } catch (err: any) {
+      setError(err.message || 'Registration failed. Please try again.');
     } finally {
       setIsLoading(false);
     }
   };
 
-  const handleDemoLogin = async (demoEmail: string) => {
-    setError('');
-    setIsLoading(true);
-    try {
-      const response = await apiLogin({ email: demoEmail, password: 'password123' });
-      login(response.access_token, response.user);
-      navigate('/');
-    } catch (err) {
-      setError('Backend unavailable. Start the API server first.');
-    } finally {
-      setIsLoading(false);
-    }
+  const handleChange = (e: React.ChangeEvent<HTMLInputElement | HTMLSelectElement>) => {
+    setFormData({ ...formData, [e.target.name]: e.target.value });
   };
-
-  // Rotate loading messages during cold start
-  const loadingMessages = [
-    'Connecting to server...',
-    'Waking up the backend (free tier)...',
-    'Almost there — initializing database...',
-    'Loading your workspace...',
-  ];
-  const [msgIndex, setMsgIndex] = useState(0);
-
-  React.useEffect(() => {
-    if (!isLoading) { setMsgIndex(0); return; }
-    const interval = setInterval(() => {
-      setMsgIndex(prev => (prev + 1) % loadingMessages.length);
-    }, 4000);
-    return () => clearInterval(interval);
-  }, [isLoading]);
-
-  if (isLoading) {
-    return (
-      <div className="min-h-screen bg-slate-50 flex flex-col items-center justify-center font-sans">
-        <motion.div
-          initial={{ opacity: 0, scale: 0.95 }}
-          animate={{ opacity: 1, scale: 1 }}
-          className="flex flex-col items-center gap-6"
-        >
-          <div className="h-14 w-14 bg-slate-900 rounded-xl flex items-center justify-center">
-            <span className="text-white font-serif font-bold text-2xl">A</span>
-          </div>
-
-          {/* Animated progress bar */}
-          <div className="w-64 h-1 bg-slate-200 rounded-full overflow-hidden">
-            <motion.div
-              className="h-full bg-slate-900 rounded-full"
-              initial={{ width: '0%' }}
-              animate={{ width: '100%' }}
-              transition={{ duration: 30, ease: 'linear' }}
-            />
-          </div>
-
-          <motion.p
-            key={msgIndex}
-            initial={{ opacity: 0, y: 5 }}
-            animate={{ opacity: 1, y: 0 }}
-            exit={{ opacity: 0, y: -5 }}
-            className="text-sm text-slate-500 font-medium"
-          >
-            {loadingMessages[msgIndex]}
-          </motion.p>
-
-          <p className="text-[11px] text-slate-400 mt-2">
-            First load may take up to 30s — free-tier server cold start
-          </p>
-        </motion.div>
-      </div>
-    );
-  }
 
   return (
     <div className="min-h-screen bg-slate-50 flex flex-col justify-center py-12 sm:px-6 lg:px-8 font-sans">
@@ -115,7 +49,7 @@ export default function Login() {
             AGRIFLOW
           </h2>
           <p className="mt-2 text-center text-sm text-slate-600 uppercase tracking-widest font-semibold">
-            Enterprise Operating System
+            Create an Account
           </p>
         </motion.div>
       </div>
@@ -127,13 +61,34 @@ export default function Login() {
         className="mt-8 sm:mx-auto sm:w-full sm:max-w-md"
       >
         <div className="bg-white py-8 px-4 shadow-xl shadow-slate-200/50 sm:rounded-lg sm:px-10 border border-slate-100">
-          <form className="space-y-6" onSubmit={handleSubmit}>
+          <form className="space-y-5" onSubmit={handleSubmit}>
             {error && (
               <div className="bg-red-50 border border-red-200 text-red-600 px-4 py-3 rounded-md text-sm flex items-center gap-2">
                 <AlertCircle size={16} />
                 {error}
               </div>
             )}
+
+            <div>
+              <label htmlFor="full_name" className="block text-sm font-medium text-slate-700">
+                Full Name
+              </label>
+              <div className="mt-1 relative rounded-md shadow-sm">
+                <div className="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none">
+                  <User className="h-5 w-5 text-slate-400" />
+                </div>
+                <input
+                  id="full_name"
+                  name="full_name"
+                  type="text"
+                  required
+                  value={formData.full_name}
+                  onChange={handleChange}
+                  className="focus:ring-slate-900 focus:border-slate-900 block w-full pl-10 sm:text-sm border-slate-300 rounded-md py-2 border bg-slate-50"
+                  placeholder="John Doe"
+                />
+              </div>
+            </div>
 
             <div>
               <label htmlFor="email" className="block text-sm font-medium text-slate-700">
@@ -149,8 +104,8 @@ export default function Login() {
                   type="email"
                   autoComplete="email"
                   required
-                  value={email}
-                  onChange={(e) => setEmail(e.target.value)}
+                  value={formData.email}
+                  onChange={handleChange}
                   className="focus:ring-slate-900 focus:border-slate-900 block w-full pl-10 sm:text-sm border-slate-300 rounded-md py-2 border bg-slate-50"
                   placeholder="you@company.com"
                 />
@@ -169,10 +124,10 @@ export default function Login() {
                   id="password"
                   name="password"
                   type="password"
-                  autoComplete="current-password"
+                  autoComplete="new-password"
                   required
-                  value={password}
-                  onChange={(e) => setPassword(e.target.value)}
+                  value={formData.password}
+                  onChange={handleChange}
                   className="focus:ring-slate-900 focus:border-slate-900 block w-full pl-10 sm:text-sm border-slate-300 rounded-md py-2 border bg-slate-50"
                   placeholder="••••••••"
                 />
@@ -180,21 +135,45 @@ export default function Login() {
             </div>
 
             <div>
+              <label htmlFor="role" className="block text-sm font-medium text-slate-700">
+                Account Role
+              </label>
+              <div className="mt-1 relative rounded-md shadow-sm">
+                <div className="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none">
+                  <Shield className="h-5 w-5 text-slate-400" />
+                </div>
+                <select
+                  id="role"
+                  name="role"
+                  value={formData.role}
+                  onChange={handleChange}
+                  className="focus:ring-slate-900 focus:border-slate-900 block w-full pl-10 sm:text-sm border-slate-300 rounded-md py-2 border bg-slate-50"
+                >
+                  <option value="Admin">Admin</option>
+                  <option value="Operations">Operations</option>
+                  <option value="Farmer">Farmer</option>
+                  <option value="Buyer">Buyer</option>
+                  <option value="Exporter">Exporter</option>
+                </select>
+              </div>
+            </div>
+
+            <div className="pt-2">
               <button
                 type="submit"
                 disabled={isLoading}
                 className="w-full flex justify-center py-2.5 px-4 border border-transparent rounded-md shadow-sm text-sm font-medium text-white bg-slate-900 hover:bg-slate-800 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-slate-900 transition-colors disabled:opacity-70 disabled:cursor-not-allowed"
               >
-                {isLoading ? <Loader2 className="animate-spin" size={20} /> : 'Sign in'}
+                {isLoading ? <Loader2 className="animate-spin" size={20} /> : 'Sign Up'}
               </button>
             </div>
           </form>
 
           <div className="mt-6 text-center">
             <p className="text-sm text-slate-600">
-              Don't have an account?{' '}
-              <Link to="/register" className="font-medium text-slate-900 hover:underline">
-                Create one
+              Already have an account?{' '}
+              <Link to="/login" className="font-medium text-slate-900 hover:underline">
+                Sign in
               </Link>
             </p>
           </div>
