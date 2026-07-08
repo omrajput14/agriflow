@@ -32,18 +32,15 @@ const scorecardData = [
 const moats = [
   {
     title: "Traceability Chain",
-    description: "End-to-end cryptographic tracing from harvest UUID to shipping container, mitigating quality claims.",
-    icon: <Layers className="w-5 h-5 text-emerald-400" />
+    description: "End-to-end cryptographic tracing from harvest UUID to shipping container, mitigating quality claims."
   },
   {
     title: "Built-in Compliance",
-    description: "Automated phytosanitary & MRL compliance engine prevents border rejections before packing.",
-    icon: <ShieldCheck className="w-5 h-5 text-blue-400" />
+    description: "Automated phytosanitary & MRL compliance engine prevents border rejections before packing."
   },
   {
     title: "Immersive Buyer UX",
-    description: "3D interactive transit models replace static emails, creating a powerful sales differentiator.",
-    icon: <Globe2 className="w-5 h-5 text-purple-400" />
+    description: "3D interactive transit models replace static emails, creating a powerful sales differentiator."
   }
 ];
 
@@ -87,7 +84,6 @@ export default function InvestorDashboard() {
         <div className="bg-white p-4 rounded-lg border border-slate-200 shadow-sm flex flex-col justify-between hover:border-slate-300 transition-colors cursor-default">
           <div className="flex items-center justify-between mb-3">
             <span className="text-[11px] font-semibold text-slate-500 uppercase tracking-wider">Overall Score</span>
-            <span className="p-1 bg-emerald-50 rounded text-emerald-600"><TrendingUp size={14} /></span>
           </div>
           <div>
             <div className="flex items-end gap-1">
@@ -101,7 +97,6 @@ export default function InvestorDashboard() {
         <div className="bg-white p-4 rounded-lg border border-slate-200 shadow-sm flex flex-col justify-between hover:border-slate-300 transition-colors cursor-default">
           <div className="flex items-center justify-between mb-3">
             <span className="text-[11px] font-semibold text-slate-500 uppercase tracking-wider">API Requests (Mock)</span>
-            <span className="p-1 bg-blue-50 rounded text-blue-600"><Zap size={14} /></span>
           </div>
           <div>
             <h3 className="text-2xl font-semibold text-slate-900 tracking-tight leading-none">{telemetry.requests.toLocaleString()}</h3>
@@ -112,7 +107,6 @@ export default function InvestorDashboard() {
         <div className="bg-white p-4 rounded-lg border border-slate-200 shadow-sm flex flex-col justify-between hover:border-slate-300 transition-colors cursor-default">
           <div className="flex items-center justify-between mb-3">
             <span className="text-[11px] font-semibold text-slate-500 uppercase tracking-wider">System Latency</span>
-            <span className="p-1 bg-purple-50 rounded text-purple-600"><Activity size={14} /></span>
           </div>
           <div>
             <h3 className="text-2xl font-semibold text-slate-900 tracking-tight leading-none">{telemetry.latency}ms</h3>
@@ -123,7 +117,6 @@ export default function InvestorDashboard() {
         <div className="bg-white p-4 rounded-lg border border-slate-200 shadow-sm flex flex-col justify-between hover:border-slate-300 transition-colors cursor-default">
           <div className="flex items-center justify-between mb-3">
             <span className="text-[11px] font-semibold text-slate-500 uppercase tracking-wider">Est. Enterprise ACV</span>
-            <span className="p-1 bg-amber-50 rounded text-amber-600"><DollarSign size={14} /></span>
           </div>
           <div>
             <h3 className="text-2xl font-semibold text-slate-900 tracking-tight leading-none">$11k</h3>
@@ -216,9 +209,6 @@ export default function InvestorDashboard() {
         <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
           {moats.map((moat, idx) => (
             <div key={idx} className="bg-[#F8FAFC] border border-slate-200 p-4 rounded-lg hover:border-emerald-300 hover:shadow-sm transition-all">
-              <div className="bg-white w-8 h-8 rounded shadow-sm border border-slate-200 flex items-center justify-center mb-3">
-                {React.cloneElement(moat.icon as React.ReactElement, { className: "w-4 h-4" })}
-              </div>
               <h3 className="text-[13px] font-semibold text-slate-900 mb-1.5">{moat.title}</h3>
               <p className="text-[12px] text-slate-500 leading-relaxed">{moat.description}</p>
             </div>
