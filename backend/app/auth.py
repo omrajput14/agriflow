@@ -12,12 +12,9 @@ from .models import User
 # Configuration
 SECRET_KEY = os.getenv("SECRET_KEY")
 if not SECRET_KEY:
-    import warnings
-    SECRET_KEY = "dev-only-insecure-key-do-not-use-in-production"
-    warnings.warn(
-        "SECRET_KEY not set — using insecure development default. "
-        "Set SECRET_KEY in your environment for production.",
-        stacklevel=2,
+    raise RuntimeError(
+        "SECRET_KEY env var is required. Set it in your environment "
+        "(e.g. export SECRET_KEY=$(python -c 'import secrets; print(secrets.token_urlsafe(48))'))."
     )
 ALGORITHM = "HS256"
 ACCESS_TOKEN_EXPIRE_MINUTES = 60 * 24 * 7 # 7 days

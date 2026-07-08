@@ -128,10 +128,11 @@ Phytosanitary certificates, bills of lading, commercial invoices, and packing li
 
 <br />
 
-### Step 1 — Backend
+### Step 1 — Clone & Backend
 
 ```bash
-cd backend
+git clone https://github.com/omrajput14/agriflow.git
+cd agriflow/backend
 python3 -m venv venv && source venv/bin/activate
 pip install -r requirements.txt
 

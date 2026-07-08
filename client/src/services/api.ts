@@ -14,7 +14,7 @@ export const login = async (credentials: any) => {
   formData.append('password', credentials.password);
 
   const controller = new AbortController();
-  const timeoutId = setTimeout(() => controller.abort(), 2000);
+  const timeoutId = setTimeout(() => controller.abort(), 45000); // 45s for Render cold start
 
   try {
     const response = await fetch(`${API_URL}/auth/login`, {
@@ -34,7 +34,7 @@ export const login = async (credentials: any) => {
 
 export const getMe = async () => {
   const controller = new AbortController();
-  const timeoutId = setTimeout(() => controller.abort(), 2000);
+  const timeoutId = setTimeout(() => controller.abort(), 45000);
 
   try {
     const response = await fetch(`${API_URL}/auth/me`, {
@@ -74,7 +74,7 @@ const MOCK_SHIPMENTS = [
 // Real HTTP errors (4xx / 5xx) propagate so the UI can show them.
 const fetchWithFallback = async (url: string, mockData: any) => {
   const controller = new AbortController();
-  const timeoutId = setTimeout(() => controller.abort(), 1500); // 1.5s timeout for fast UI fallback
+  const timeoutId = setTimeout(() => controller.abort(), 30000); // 30s for Render cold start
   try {
     const response = await fetch(url, { headers: getAuthHeaders(), signal: controller.signal });
     clearTimeout(timeoutId);

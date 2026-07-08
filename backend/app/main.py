@@ -38,14 +38,13 @@ app.add_middleware(
         "http://localhost:5173",
         "http://localhost:5174",
         "http://localhost:3000",
-        # Production URLs — update these after deploying
-        "https://agriflow.vercel.app",
-        "https://agriflow-omrajput14.vercel.app",
+        # Production
+        "https://agriflow-ten.vercel.app",
     ],
     allow_credentials=True,
     allow_methods=["*"],
     allow_headers=["*"],
-    allow_origin_regex=r"https://agriflow.*\.vercel\.app",
+    allow_origin_regex=r"https://agriflow-.*\.vercel\.app",
 )
 
 @app.on_event("startup")

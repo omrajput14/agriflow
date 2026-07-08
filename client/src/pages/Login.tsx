@@ -43,6 +43,63 @@ export default function Login() {
     }
   };
 
+  // Rotate loading messages during cold start
+  const loadingMessages = [
+    'Connecting to server...',
+    'Waking up the backend (free tier)...',
+    'Almost there — initializing database...',
+    'Loading your workspace...',
+  ];
+  const [msgIndex, setMsgIndex] = useState(0);
+
+  React.useEffect(() => {
+    if (!isLoading) { setMsgIndex(0); return; }
+    const interval = setInterval(() => {
+      setMsgIndex(prev => (prev + 1) % loadingMessages.length);
+    }, 4000);
+    return () => clearInterval(interval);
+  }, [isLoading]);
+
+  if (isLoading) {
+    return (
+      <div className="min-h-screen bg-slate-50 flex flex-col items-center justify-center font-sans">
+        <motion.div
+          initial={{ opacity: 0, scale: 0.95 }}
+          animate={{ opacity: 1, scale: 1 }}
+          className="flex flex-col items-center gap-6"
+        >
+          <div className="h-14 w-14 bg-slate-900 rounded-xl flex items-center justify-center">
+            <span className="text-white font-serif font-bold text-2xl">A</span>
+          </div>
+
+          {/* Animated progress bar */}
+          <div className="w-64 h-1 bg-slate-200 rounded-full overflow-hidden">
+            <motion.div
+              className="h-full bg-slate-900 rounded-full"
+              initial={{ width: '0%' }}
+              animate={{ width: '100%' }}
+              transition={{ duration: 30, ease: 'linear' }}
+            />
+          </div>
+
+          <motion.p
+            key={msgIndex}
+            initial={{ opacity: 0, y: 5 }}
+            animate={{ opacity: 1, y: 0 }}
+            exit={{ opacity: 0, y: -5 }}
+            className="text-sm text-slate-500 font-medium"
+          >
+            {loadingMessages[msgIndex]}
+          </motion.p>
+
+          <p className="text-[11px] text-slate-400 mt-2">
+            First load may take up to 30s — free-tier server cold start
+          </p>
+        </motion.div>
+      </div>
+    );
+  }
+
   return (
     <div className="min-h-screen bg-slate-50 flex flex-col justify-center py-12 sm:px-6 lg:px-8 font-sans">
       <div className="sm:mx-auto sm:w-full sm:max-w-md">
