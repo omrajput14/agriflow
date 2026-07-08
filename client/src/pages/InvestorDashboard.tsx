@@ -138,7 +138,7 @@ export default function InvestorDashboard() {
             <BarChart4 className="w-4 h-4 text-emerald-600" />
             <h2 className="text-[15px] font-semibold text-slate-900 tracking-tight">Market Size Opportunity</h2>
           </div>
-          <div className="flex-1 min-h-[250px] w-full">
+          <div className="h-[280px] w-full">
             <ResponsiveContainer width="100%" height="100%">
               <BarChart
                 data={marketData}
@@ -174,7 +174,7 @@ export default function InvestorDashboard() {
             <Activity className="w-4 h-4 text-purple-600" />
             <h2 className="text-[15px] font-semibold text-slate-900 tracking-tight">Strategic Platform Scorecard</h2>
           </div>
-          <div className="flex-1 min-h-[250px] w-full -ml-4">
+          <div className="h-[280px] w-full -ml-4">
             <ResponsiveContainer width="100%" height="100%">
               <RadarChart cx="50%" cy="50%" outerRadius="70%" data={scorecardData}>
                 <PolarGrid stroke="#e2e8f0" />
