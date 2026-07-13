@@ -1,7 +1,7 @@
-import React, { useRef, useState, useEffect } from 'react';
+import React, { useRef, useState, useEffect, useMemo } from 'react';
 import { motion } from 'framer-motion';
 import { Canvas, useFrame } from '@react-three/fiber';
-import { OrbitControls, Html, Line, Box, Cylinder, Plane, Edges } from '@react-three/drei';
+import { OrbitControls, Html, Line, Box, Cylinder, Environment, ContactShadows } from '@react-three/drei';
 import * as THREE from 'three';
 import { MapPin, Thermometer, Anchor, Calendar, FileText, CheckCircle2, Search, Loader2, Ship as ShipIcon, FastForward } from 'lucide-react';
 import { getShipments, advanceShipment } from '../services/api';
@@ -9,81 +9,200 @@ import { getShipments, advanceShipment } from '../services/api';
 // --- Custom 3D Shapes ---
 
 function WarehouseShape({ color, isActive }: { color: string, isActive: boolean }) {
-  const meshRef = useRef<THREE.Group>(null);
-  useFrame((state) => {
-    if (isActive && meshRef.current) {
-      meshRef.current.position.y = Math.sin(state.clock.elapsedTime * 2) * 0.1;
-    }
-  });
-
   return (
-    <group ref={meshRef} position={[0, 0.6, 0]}>
-      <Box args={[1.5, 1.2, 1.5]}>
-        <meshStandardMaterial color={color} />
-        <Edges scale={1.01} threshold={15} color={isActive ? '#ffffff' : '#000000'} />
+    <group position={[0, 0, 0]}>
+      {/* Main Building */}
+      <Box args={[2, 1.2, 1.5]} position={[0, 0.6, 0]}>
+        <meshStandardMaterial color={isActive ? '#3B82F6' : '#64748B'} />
       </Box>
-      <Box args={[1.7, 0.4, 1.7]} position={[0, 0.8, 0]}>
-        <meshStandardMaterial color={isActive ? '#3B82F6' : '#94A3B8'} />
+      {/* Sloped Roof */}
+      <mesh position={[0, 1.5, 0]} rotation={[0, 0, 0]}>
+        <cylinderGeometry args={[1.06, 1.06, 2, 3]} />
+        <meshStandardMaterial color={isActive ? '#1E40AF' : '#475569'} />
+      </mesh>
+      {/* Door */}
+      <Box args={[0.6, 0.6, 1.51]} position={[0, 0.3, 0]}>
+        <meshStandardMaterial color="#1E293B" />
       </Box>
+      <ContactShadows position={[0, 0.01, 0]} opacity={0.6} scale={4} blur={1.5} far={2} />
     </group>
   );
 }
 
 function CargoShipShape({ color, isActive }: { color: string, isActive: boolean }) {
   const groupRef = useRef<THREE.Group>(null);
+  const wakeRef = useRef<THREE.Mesh>(null);
+
   useFrame((state) => {
-    if (isActive && groupRef.current) {
-      groupRef.current.position.y = Math.sin(state.clock.elapsedTime * 1.5) * 0.15;
-      groupRef.current.rotation.z = Math.sin(state.clock.elapsedTime) * 0.05;
-      groupRef.current.rotation.x = Math.sin(state.clock.elapsedTime * 0.8) * 0.02;
+    if (groupRef.current) {
+      const t = state.clock.elapsedTime;
+      // Bobbing and rocking synced roughly with ocean waves
+      groupRef.current.position.y = Math.sin(t * 2.0) * 0.1;
+      groupRef.current.rotation.z = Math.sin(t * 1.5) * 0.05;
+      groupRef.current.rotation.x = Math.cos(t * 1.8) * 0.03;
+    }
+    if (isActive && wakeRef.current) {
+      const t = state.clock.elapsedTime;
+      wakeRef.current.scale.y = 1 + Math.sin(t * 5) * 0.2;
+      wakeRef.current.scale.x = 1 + Math.sin(t * 3) * 0.1;
     }
   });
 
   return (
-    <group ref={groupRef} position={[0, 0.5, 0]}>
-      <Box args={[3, 0.8, 1.2]} position={[0, 0, 0]}>
-        <meshStandardMaterial color={color} />
-        <Edges scale={1.01} color={isActive ? '#ffffff' : '#000000'} />
-      </Box>
-      <Box args={[0.8, 0.8, 1.0]} position={[-0.8, 0.8, 0]}>
-        <meshStandardMaterial color="#FFFFFF" />
-      </Box>
-      <Box args={[1.5, 0.6, 0.8]} position={[0.5, 0.7, 0]}>
-        <meshStandardMaterial color={isActive ? '#1E5EFF' : '#94A3B8'} />
-      </Box>
+    <group position={[0, 0, 0]}>
+      <group ref={groupRef} position={[0, 0, 0]}>
+        {/* Hull */}
+        <mesh position={[0, 0.4, 0]}>
+          <boxGeometry args={[3.2, 0.8, 1.2]} />
+          <meshStandardMaterial color={isActive ? '#1E5EFF' : '#334155'} />
+        </mesh>
+        {/* Bow (Tapered front) */}
+        <mesh position={[1.6, 0.4, 0]} rotation={[0, 0, -Math.PI / 2]}>
+          <cylinderGeometry args={[0.6, 0.6, 0.8, 3]} />
+          <meshStandardMaterial color={isActive ? '#1E5EFF' : '#334155'} />
+        </mesh>
+        
+        {/* Bridge */}
+        <Box args={[0.8, 1.0, 1.0]} position={[-1.0, 1.0, 0]}>
+          <meshStandardMaterial color="#FFFFFF" />
+        </Box>
+        {/* Funnel */}
+        <Cylinder args={[0.15, 0.15, 0.6]} position={[-1.2, 1.6, 0]}>
+          <meshStandardMaterial color="#EF4444" />
+        </Cylinder>
+
+        {/* Containers */}
+        {/* Stack 1 */}
+        <Box args={[0.8, 0.5, 1.0]} position={[0.2, 1.05, 0]}>
+          <meshStandardMaterial color="#EF4444" />
+        </Box>
+        <Box args={[0.8, 0.5, 1.0]} position={[0.2, 1.55, 0]}>
+          <meshStandardMaterial color="#3B82F6" />
+        </Box>
+        {/* Stack 2 */}
+        <Box args={[0.8, 0.5, 1.0]} position={[1.1, 1.05, 0]}>
+          <meshStandardMaterial color="#F59E0B" />
+        </Box>
+      </group>
+      
+      {/* Wake Effect */}
+      {isActive && (
+        <mesh ref={wakeRef} position={[-2.5, 0.02, 0]} rotation={[-Math.PI / 2, 0, 0]}>
+          <planeGeometry args={[3, 1.5]} />
+          <meshBasicMaterial color="#ffffff" transparent opacity={0.3} depthWrite={false} />
+        </mesh>
+      )}
+      
+      <ContactShadows position={[0, 0.01, 0]} opacity={0.7} scale={6} blur={2} far={2} />
     </group>
   );
 }
 
-function ContainerShape({ color, isActive }: { color: string, isActive: boolean }) {
-  const meshRef = useRef<THREE.Group>(null);
-  useFrame((state) => {
-    if (isActive && meshRef.current) {
-      meshRef.current.position.y = Math.sin(state.clock.elapsedTime * 2) * 0.1;
-    }
-  });
-
+function PortShape({ color, isActive }: { color: string, isActive: boolean }) {
   return (
-    <group ref={meshRef} position={[0, 0.5, 0]}>
-      <Box args={[1.8, 0.9, 0.9]}>
-        <meshStandardMaterial color={color} roughness={0.7} />
-        <Edges scale={1.01} threshold={15} color={isActive ? '#ffffff' : '#000000'} />
+    <group position={[0, 0, 0]}>
+      {/* Dock Platform */}
+      <Box args={[3, 0.2, 2]} position={[0, 0.1, 0]}>
+        <meshStandardMaterial color="#94A3B8" />
       </Box>
+      
+      {/* Crane */}
+      <group position={[0, 0.2, -0.5]}>
+        {/* Legs */}
+        <Box args={[0.2, 2, 0.2]} position={[-0.8, 1, 0]}>
+          <meshStandardMaterial color="#F59E0B" />
+        </Box>
+        <Box args={[0.2, 2, 0.2]} position={[0.8, 1, 0]}>
+          <meshStandardMaterial color="#F59E0B" />
+        </Box>
+        {/* Top Beam */}
+        <Box args={[2.4, 0.2, 0.2]} position={[0, 2.1, 0.3]}>
+          <meshStandardMaterial color="#F59E0B" />
+        </Box>
+        {/* Cabin */}
+        <Box args={[0.4, 0.4, 0.4]} position={[0.5, 1.8, 0.3]}>
+          <meshStandardMaterial color="#1E293B" />
+        </Box>
+      </group>
+
+      {/* Containers on dock */}
+      <Box args={[0.8, 0.4, 0.4]} position={[-1, 0.4, 0.5]}>
+        <meshStandardMaterial color="#EF4444" />
+      </Box>
+      <Box args={[0.8, 0.4, 0.4]} position={[-1, 0.8, 0.5]}>
+        <meshStandardMaterial color="#3B82F6" />
+      </Box>
+
+      <ContactShadows position={[0, 0.01, 0]} opacity={0.6} scale={5} blur={1.5} far={2} />
     </group>
   );
 }
 
 function FarmShape({ color, isActive }: { color: string, isActive: boolean }) {
   return (
-    <group position={[0, 0.6, 0]}>
-      <Cylinder args={[0.8, 0.8, 1.2, 16]}>
-        <meshStandardMaterial color={color} />
-        <Edges scale={1.01} color={isActive ? '#ffffff' : '#000000'} />
+    <group position={[0, 0, 0]}>
+      {/* Silo */}
+      <Cylinder args={[0.8, 0.8, 2, 16]} position={[-0.5, 1, -0.5]}>
+        <meshStandardMaterial color={isActive ? '#3B82F6' : '#94A3B8'} />
       </Cylinder>
-      <Cylinder args={[0, 0.9, 0.6, 16]} position={[0, 0.9, 0]}>
-        <meshStandardMaterial color={color} />
+      <Cylinder args={[0, 0.9, 0.8, 16]} position={[-0.5, 2.4, -0.5]}>
+        <meshStandardMaterial color={isActive ? '#1E40AF' : '#64748B'} />
       </Cylinder>
+      {/* Barn */}
+      <Box args={[1.5, 1, 1.5]} position={[0.8, 0.5, 0.5]}>
+        <meshStandardMaterial color="#DC2626" />
+      </Box>
+      {/* Roof */}
+      <mesh position={[0.8, 1.25, 0.5]} rotation={[0, 0, 0]}>
+        <cylinderGeometry args={[1.06, 1.06, 1.5, 3]} />
+        <meshStandardMaterial color="#7F1D1D" />
+      </mesh>
+      
+      <ContactShadows position={[0, 0.01, 0]} opacity={0.5} scale={4} blur={1.5} far={2} />
     </group>
+  );
+}
+
+// --- Shader Ocean ---
+
+function OceanSurface() {
+  const customUniforms = useMemo(() => ({
+    uTime: { value: 0 }
+  }), []);
+
+  useFrame((state) => {
+    customUniforms.uTime.value = state.clock.elapsedTime;
+  });
+
+  const onBeforeCompile = (shader: any) => {
+    shader.uniforms.uTime = customUniforms.uTime;
+    shader.vertexShader = `
+      uniform float uTime;
+      ${shader.vertexShader}
+    `;
+    shader.vertexShader = shader.vertexShader.replace(
+      '#include <begin_vertex>',
+      `
+      #include <begin_vertex>
+      float wave = sin(position.x * 0.5 + uTime) * cos(position.y * 0.5 + uTime) * 0.2;
+      wave += sin(position.x * 1.5 - uTime * 1.5) * 0.1;
+      transformed.z += wave;
+      `
+    );
+  };
+
+  return (
+    <mesh rotation={[-Math.PI / 2, 0, 0]} position={[0, -0.2, 0]}>
+      {/* High segment count for vertex displacement */}
+      <planeGeometry args={[200, 200, 128, 128]} />
+      <meshStandardMaterial 
+        color="#0284c7" 
+        metalness={0.9} 
+        roughness={0.1}
+        onBeforeCompile={onBeforeCompile}
+        flatShading={true} // Triggers correct normal calculation for displaced vertices in fragment shader
+      />
+    </mesh>
   );
 }
 
@@ -96,7 +215,7 @@ function SupplyChainNode({ position, nodeData, isActive, delay = 0 }: any) {
     switch (nodeData.type) {
       case 'farm': return <FarmShape color={color} isActive={isActive} />;
       case 'warehouse': return <WarehouseShape color={color} isActive={isActive} />;
-      case 'port': return <ContainerShape color={color} isActive={isActive} />;
+      case 'port': return <PortShape color={color} isActive={isActive} />;
       case 'ship': return <CargoShipShape color={color} isActive={isActive} />;
       default: return <WarehouseShape color={color} isActive={isActive} />;
     }
@@ -106,7 +225,7 @@ function SupplyChainNode({ position, nodeData, isActive, delay = 0 }: any) {
     <group position={position}>
       {renderShape()}
       
-      <Html position={[0, isActive ? 2.2 : 1.5, 0]} center zIndexRange={[100, 0]}>
+      <Html position={[0, 2.5, 0]} center zIndexRange={[100, 0]}>
         <motion.div 
           initial={{ opacity: 0, y: 10, scale: 0.9 }}
           animate={{ opacity: 1, y: 0, scale: isActive ? 1 : 0.9 }}
@@ -152,7 +271,7 @@ function SupplyChainScene({ selectedShipment }: { selectedShipment: any }) {
 
   const nodes = [
     { 
-      type: 'farm', title: 'Origin Farm', pos: [-8, 0, 0], status: 'completed',
+      type: 'farm', title: 'Origin Farm', pos: [-12, 0, -2], status: 'completed',
       details: [
         { label: 'Farm', value: 'Wade Banana Farm', icon: MapPin },
         { label: 'Harvest Vol', value: '24.0 Tons', icon: FileText },
@@ -160,7 +279,7 @@ function SupplyChainScene({ selectedShipment }: { selectedShipment: any }) {
       ]
     },
     { 
-      type: 'warehouse', title: 'Packhouse Quality', pos: [-4, 0, 1.5], status: 'completed',
+      type: 'warehouse', title: 'Packhouse Quality', pos: [-6, 0, 1], status: 'completed',
       details: [
         { label: 'Facility', value: 'Pune Cold Storage', icon: MapPin },
         { label: 'Grade', value: 'Grade A (Export)', icon: CheckCircle2 },
@@ -176,7 +295,7 @@ function SupplyChainScene({ selectedShipment }: { selectedShipment: any }) {
       ]
     },
     { 
-      type: 'port', title: 'Destination Port', pos: [5, 0, 0], status: 'pending',
+      type: 'port', title: 'Destination Port', pos: [6, 0, 0], status: 'pending',
       details: [
         { label: 'Location', value: 'Rotterdam (RTM)', icon: MapPin },
         { label: 'Customs', value: 'Awaiting Doc', icon: FileText },
@@ -184,7 +303,7 @@ function SupplyChainScene({ selectedShipment }: { selectedShipment: any }) {
       ]
     },
     { 
-      type: 'warehouse', title: 'Buyer Hub', pos: [9, 0, 1], status: 'pending',
+      type: 'warehouse', title: 'Buyer Hub', pos: [12, 0, -1.5], status: 'pending',
       details: [
         { label: 'Buyer', value: selectedShipment.buyer_id, icon: MapPin },
         { label: 'Contract', value: 'EUR-2026-88', icon: FileText }
@@ -196,11 +315,16 @@ function SupplyChainScene({ selectedShipment }: { selectedShipment: any }) {
 
   return (
     <>
-      <ambientLight intensity={0.6} color="#F8FAFC" />
-      <directionalLight position={[10, 20, 10]} intensity={1.5} castShadow shadow-mapSize={[1024, 1024]} />
-      <hemisphereLight intensity={0.4} groundColor="#F1F5F9" />
+      <color attach="background" args={['#e0f2fe']} />
+      <fog attach="fog" args={['#e0f2fe', 10, 50]} />
       
-      <Line points={linePoints} color="#94A3B8" lineWidth={4} dashed dashScale={20} dashSize={1} gapSize={1} />
+      <Environment preset="city" />
+      <ambientLight intensity={0.2} />
+      <directionalLight position={[10, 20, 10]} intensity={1.0} />
+      
+      <OceanSurface />
+      
+      <Line points={linePoints} color="#F8FAFC" lineWidth={3} dashed dashScale={10} dashSize={1} gapSize={1} position={[0, 0.1, 0]} />
       
       {nodes.map((node, i) => (
         <SupplyChainNode 
@@ -213,19 +337,16 @@ function SupplyChainScene({ selectedShipment }: { selectedShipment: any }) {
       ))}
 
       <OrbitControls 
+        enableDamping={true}
+        dampingFactor={0.05}
         enablePan={true} 
         enableZoom={true} 
         minDistance={5} 
-        maxDistance={25}
+        maxDistance={35}
+        minPolarAngle={Math.PI / 6}
         maxPolarAngle={Math.PI / 2 - 0.05} 
         target={[0, 0, 0]}
       />
-      
-      <mesh rotation={[-Math.PI / 2, 0, 0]} position={[0, 0, 0]} receiveShadow>
-        <planeGeometry args={[100, 100]} />
-        <meshStandardMaterial color="#F8FAFC" />
-        <gridHelper args={[100, 100, '#E2E8F0', '#F1F5F9']} rotation={[Math.PI / 2, 0, 0]} position={[0, 0.01, 0]} />
-      </mesh>
     </>
   );
 }
@@ -340,7 +461,7 @@ export default function ShipmentsTracker() {
       {/* 3D Canvas Area */}
       <div className="flex-1 h-full relative cursor-grab active:cursor-grabbing">
         {activeShipment ? (
-          <Canvas camera={{ position: [0, 8, 16], fov: 35 }} shadows>
+          <Canvas camera={{ position: [0, 8, 20], fov: 40 }}>
             <SupplyChainScene selectedShipment={activeShipment} />
           </Canvas>
         ) : (
