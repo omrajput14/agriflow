@@ -1,10 +1,12 @@
 import React from 'react';
 import { motion } from 'framer-motion';
 import { Sprout, DollarSign, Calendar, Truck, ArrowUpRight, CloudRain, Sun } from 'lucide-react';
+import { useNavigate } from 'react-router-dom';
 import { useAuth } from '../context/AuthContext';
 
 export default function FarmerDashboard({ lots }: { lots: any[] }) {
   const { user } = useAuth();
+  const navigate = useNavigate();
 
   // For the prototype, we simulate that this farmer owns all the lots in the DB,
   // or we filter them if we had a real relation. We'll use all 'lots' to simulate their yield.
@@ -93,7 +95,7 @@ export default function FarmerDashboard({ lots }: { lots: any[] }) {
           <div className="bg-white border border-slate-200 rounded-lg shadow-sm overflow-hidden">
             <div className="px-5 py-4 border-b border-slate-200 flex justify-between items-center">
               <h3 className="font-semibold text-slate-900">Recent Harvest Deliveries</h3>
-              <button className="text-blue-600 text-sm font-medium hover:text-blue-700">View All</button>
+              <button onClick={() => navigate('/packhouse')} className="text-blue-600 text-sm font-medium hover:text-blue-700">View All</button>
             </div>
             <table className="w-full text-sm text-left">
               <thead className="bg-slate-50 text-slate-500 text-[11px] uppercase tracking-wider">

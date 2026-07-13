@@ -2,7 +2,9 @@ import React, { useState } from 'react';
 import { motion } from 'framer-motion';
 import { Ship, MapPin, Navigation, AlertTriangle, ArrowRight, Zap, CheckCircle2, TrendingDown, Anchor, Clock } from 'lucide-react';
 
-const SHIPMENTS = [
+import { getShipments } from '../services/api';
+
+const MOCK_FALLBACK = [
   { 
     id: 'SHP-EU-842', 
     vessel: 'MSC Isabelle', 
@@ -12,23 +14,41 @@ const SHIPMENTS = [
     originalDestination: 'Rotterdam, NL',
     delay: '+48 Hours (Port Congestion)',
     spoilageRisk: 'High (85%)'
-  },
-  { 
-    id: 'SHP-US-119', 
-    vessel: 'Maersk Sealand', 
-    cargo: 'Alphonso Mangoes (20ft Ref)', 
-    origin: 'Mumbai, India',
-    currentLocation: 'Pacific Ocean',
-    originalDestination: 'Los Angeles, USA',
-    delay: 'On Schedule',
-    spoilageRisk: 'Low (12%)'
   }
 ];
 
 export default function RouteOptimization() {
-  const [selectedShipment, setSelectedShipment] = useState(SHIPMENTS[0]);
+  const [shipments, setShipments] = useState<any[]>([]);
+  const [loading, setLoading] = useState(true);
+  const [selectedShipment, setSelectedShipment] = useState<any>(null);
   const [routeAccepted, setRouteAccepted] = useState(false);
   const [isProcessing, setIsProcessing] = useState(false);
+
+  useEffect(() => {
+    const fetchShipments = async () => {
+      try {
+        const data = await getShipments();
+        // Map backend data to UI format, fallback to mock fields where backend doesn't have it
+        const mapped = data.map((s: any) => ({
+          id: s.id,
+          vessel: s.vessel_name || 'Unassigned Vessel',
+          cargo: 'Produce Shipment',
+          origin: s.origin_port || 'Unknown Origin',
+          currentLocation: s.current_location || 'In Transit',
+          originalDestination: s.destination_port || 'Unknown Dest',
+          delay: s.eta ? 'On Schedule' : '+48 Hours (Port Congestion)',
+          spoilageRisk: 'High (85%)'
+        }));
+        setShipments(mapped);
+        if (mapped.length > 0) setSelectedShipment(mapped[0]);
+      } catch (err) {
+        console.error('Failed to load shipments for routing', err);
+      } finally {
+        setLoading(false);
+      }
+    };
+    fetchShipments();
+  }, []);
 
   const handleReroute = () => {
     setIsProcessing(true);
@@ -38,7 +58,7 @@ export default function RouteOptimization() {
     }, 1500);
   };
 
-  const isDelayed = selectedShipment.delay !== 'On Schedule';
+  const isDelayed = selectedShipment?.delay !== 'On Schedule';
 
   return (
     <motion.div 
@@ -81,36 +101,44 @@ export default function RouteOptimization() {
                 <select 
                   className="w-full border border-slate-300 rounded-md px-3 py-2 text-sm outline-none focus:border-blue-500 bg-slate-50"
                   onChange={(e) => {
-                    setSelectedShipment(SHIPMENTS.find(s => s.id === e.target.value) || SHIPMENTS[0]);
+                    setSelectedShipment(shipments.find(s => s.id === e.target.value) || shipments[0]);
                     setRouteAccepted(false);
                   }}
-                  disabled={routeAccepted}
+                  disabled={routeAccepted || loading}
                 >
-                  {SHIPMENTS.map(ship => (
-                    <option key={ship.id} value={ship.id}>{ship.id} — {ship.vessel}</option>
-                  ))}
+                  {loading ? (
+                    <option>Loading vessels...</option>
+                  ) : shipments.length === 0 ? (
+                    <option>No vessels in transit</option>
+                  ) : (
+                    shipments.map(ship => (
+                      <option key={ship.id} value={ship.id}>{ship.id} — {ship.vessel}</option>
+                    ))
+                  )}
                 </select>
               </div>
 
-              <div className="pt-4 border-t border-slate-100 space-y-3 text-sm">
-                <div className="flex justify-between">
-                  <span className="text-slate-500">Cargo</span>
-                  <span className="font-medium text-slate-900">{selectedShipment.cargo}</span>
+              {selectedShipment && (
+                <div className="pt-4 border-t border-slate-100 space-y-3 text-sm">
+                  <div className="flex justify-between">
+                    <span className="text-slate-500">Cargo</span>
+                    <span className="font-medium text-slate-900">{selectedShipment.cargo}</span>
+                  </div>
+                  <div className="flex justify-between">
+                    <span className="text-slate-500">Last Ping</span>
+                    <span className="font-medium text-slate-900">{selectedShipment.currentLocation}</span>
+                  </div>
+                  <div className="flex justify-between">
+                    <span className="text-slate-500">Spoilage Risk</span>
+                    <span className={`font-bold ${isDelayed ? 'text-red-600' : 'text-emerald-600'}`}>{selectedShipment.spoilageRisk}</span>
+                  </div>
                 </div>
-                <div className="flex justify-between">
-                  <span className="text-slate-500">Last Ping</span>
-                  <span className="font-medium text-slate-900">{selectedShipment.currentLocation}</span>
-                </div>
-                <div className="flex justify-between">
-                  <span className="text-slate-500">Spoilage Risk</span>
-                  <span className={`font-bold ${isDelayed ? 'text-red-600' : 'text-emerald-600'}`}>{selectedShipment.spoilageRisk}</span>
-                </div>
-              </div>
+              )}
             </div>
           </div>
 
           {/* Alert Panel */}
-          {isDelayed && !routeAccepted && (
+          {isDelayed && !routeAccepted && selectedShipment && (
             <motion.div 
               initial={{ opacity: 0, scale: 0.95 }}
               animate={{ opacity: 1, scale: 1 }}
@@ -180,33 +208,35 @@ export default function RouteOptimization() {
                   </svg>
                 )}
 
-                <div className="relative flex justify-between items-center z-10">
-                  <div className="flex flex-col items-center">
-                    <div className="w-8 h-8 rounded-full bg-slate-900 text-white flex items-center justify-center shadow-md border-4 border-white">
-                      <Anchor size={14} />
-                    </div>
-                    <span className="text-xs font-bold text-slate-700 mt-2">{selectedShipment.origin}</span>
-                    <span className="text-[10px] text-slate-400">Origin</span>
-                  </div>
-
-                  {isDelayed && (
-                    <div className="flex flex-col items-center absolute left-1/2 -top-6 -translate-x-1/2">
-                      <div className={`w-8 h-8 rounded-full ${routeAccepted ? 'bg-emerald-500' : 'bg-blue-500'} text-white flex items-center justify-center shadow-md border-4 border-white`}>
-                        <Ship size={14} />
+                  {selectedShipment && (
+                    <div className="flex justify-between items-center z-10 w-full px-8 relative">
+                      <div className="flex flex-col items-center">
+                        <div className="w-8 h-8 rounded-full bg-slate-900 text-white flex items-center justify-center shadow-md border-4 border-white">
+                          <Anchor size={14} />
+                        </div>
+                        <span className="text-xs font-bold text-slate-700 mt-2">{selectedShipment.origin}</span>
+                        <span className="text-[10px] text-slate-400">Origin</span>
                       </div>
-                      <span className={`text-xs font-bold ${routeAccepted ? 'text-emerald-700' : 'text-blue-700'} mt-2`}>Antwerp, BE</span>
-                      <span className={`text-[10px] ${routeAccepted ? 'text-emerald-600' : 'text-blue-500'} font-semibold bg-white px-2 py-0.5 rounded-full border shadow-sm mt-1`}>AI Suggestion</span>
+
+                      {isDelayed && (
+                        <div className="flex flex-col items-center absolute left-1/2 -top-6 -translate-x-1/2">
+                          <div className={`w-8 h-8 rounded-full ${routeAccepted ? 'bg-emerald-500' : 'bg-blue-500'} text-white flex items-center justify-center shadow-md border-4 border-white`}>
+                            <Ship size={14} />
+                          </div>
+                          <span className={`text-xs font-bold ${routeAccepted ? 'text-emerald-700' : 'text-blue-700'} mt-2`}>Antwerp, BE</span>
+                          <span className={`text-[10px] ${routeAccepted ? 'text-emerald-600' : 'text-blue-500'} font-semibold bg-white px-2 py-0.5 rounded-full border shadow-sm mt-1`}>AI Suggestion</span>
+                        </div>
+                      )}
+
+                      <div className="flex flex-col items-center opacity-50">
+                        <div className="w-8 h-8 rounded-full bg-red-500 text-white flex items-center justify-center shadow-md border-4 border-white">
+                          <Clock size={14} />
+                        </div>
+                        <span className="text-xs font-bold text-slate-700 mt-2">{selectedShipment.originalDestination}</span>
+                        <span className="text-[10px] text-red-500 font-bold bg-red-50 px-2 py-0.5 rounded-full mt-1">Congested</span>
+                      </div>
                     </div>
                   )}
-
-                  <div className="flex flex-col items-center opacity-50">
-                    <div className="w-8 h-8 rounded-full bg-red-500 text-white flex items-center justify-center shadow-md border-4 border-white">
-                      <Clock size={14} />
-                    </div>
-                    <span className="text-xs font-bold text-slate-700 mt-2">{selectedShipment.originalDestination}</span>
-                    <span className="text-[10px] text-red-500 font-bold bg-red-50 px-2 py-0.5 rounded-full mt-1">Congested</span>
-                  </div>
-                </div>
               </div>
 
               {/* Comparison Matrix */}
@@ -266,7 +296,7 @@ export default function RouteOptimization() {
                     <CheckCircle2 size={32} className="text-emerald-500" />
                   </div>
                   <h4 className="font-semibold text-slate-900 text-lg mb-1">Vessel is on Optimal Path</h4>
-                  <p className="text-sm text-slate-500 max-w-md">The AI routing engine detects no significant port congestion or weather delays on the current transit vector to {selectedShipment.originalDestination}.</p>
+                  <p className="text-sm text-slate-500 max-w-md">The AI routing engine detects no significant port congestion or weather delays on the current transit vector to {selectedShipment?.originalDestination}.</p>
                 </div>
               )}
 

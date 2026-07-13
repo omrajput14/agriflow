@@ -8,8 +8,10 @@ import {
   Zap, 
   DollarSign, 
   Activity,
-  Layers
+  Layers,
+  Loader2
 } from 'lucide-react';
+import { getFarms, getHarvestLots, getShipments, getBuyers } from '../services/api';
 import { 
   BarChart, Bar, XAxis, YAxis, CartesianGrid, Tooltip as RechartsTooltip, ResponsiveContainer,
   Radar, RadarChart, PolarGrid, PolarAngleAxis, PolarRadiusAxis
@@ -46,6 +48,35 @@ const moats = [
 
 export default function InvestorDashboard() {
   const [telemetry, setTelemetry] = useState({ requests: 0, latency: 45, uptime: 99.99 });
+  
+  const [data, setData] = useState({
+    farms: 0,
+    buyers: 0,
+    lots: 0,
+    shipments: 0,
+    totalVolume: 0
+  });
+  const [loading, setLoading] = useState(true);
+
+  useEffect(() => {
+    const fetchData = async () => {
+      try {
+        const [f, b, l, s] = await Promise.all([getFarms(), getBuyers(), getHarvestLots(), getShipments()]);
+        setData({
+          farms: f.length,
+          buyers: b.length,
+          lots: l.length,
+          shipments: s.length,
+          totalVolume: l.reduce((acc: number, lot: any) => acc + (lot.weight_tons || 0), 0)
+        });
+      } catch (err) {
+        console.error("Failed to load investor KPI data", err);
+      } finally {
+        setLoading(false);
+      }
+    };
+    fetchData();
+  }, []);
 
   // Simulate live platform telemetry
   useEffect(() => {
@@ -80,50 +111,56 @@ export default function InvestorDashboard() {
       </div>
 
       {/* Top Metrics Row */}
+      {loading ? (
+        <div className="flex flex-col items-center justify-center py-20 text-slate-400">
+          <Loader2 className="animate-spin mb-4" size={32} />
+          <p>Compiling Telemetry Data...</p>
+        </div>
+      ) : (
       <div className="grid grid-cols-1 md:grid-cols-4 gap-4 mb-6">
         <div className="bg-white p-4 rounded-lg border border-slate-200 shadow-sm flex flex-col justify-between hover:border-slate-300 transition-colors cursor-default">
           <div className="flex items-center justify-between mb-3">
-            <span className="text-[11px] font-semibold text-slate-500 uppercase tracking-wider">Overall Score</span>
+            <span className="text-[11px] font-semibold text-slate-500 uppercase tracking-wider">Platform ACV Est.</span>
           </div>
           <div>
             <div className="flex items-end gap-1">
-              <h3 className="text-2xl font-semibold text-slate-900 tracking-tight leading-none">8.75</h3>
-              <span className="text-[13px] font-medium text-slate-500 mb-0.5">/10</span>
+              <h3 className="text-2xl font-semibold text-slate-900 tracking-tight leading-none">${((data.buyers + data.farms) * 2.5).toFixed(1)}k</h3>
             </div>
-            <div className="text-[11px] font-medium text-emerald-600 mt-2">Strong Investment Profile</div>
+            <div className="text-[11px] font-medium text-emerald-600 mt-2">Based on active accounts</div>
           </div>
         </div>
 
         <div className="bg-white p-4 rounded-lg border border-slate-200 shadow-sm flex flex-col justify-between hover:border-slate-300 transition-colors cursor-default">
           <div className="flex items-center justify-between mb-3">
-            <span className="text-[11px] font-semibold text-slate-500 uppercase tracking-wider">API Requests (Mock)</span>
+            <span className="text-[11px] font-semibold text-slate-500 uppercase tracking-wider">Total Traceable Volume</span>
           </div>
           <div>
-            <h3 className="text-2xl font-semibold text-slate-900 tracking-tight leading-none">{telemetry.requests.toLocaleString()}</h3>
-            <div className="text-[11px] font-medium text-slate-500 mt-2">Protected by SlowAPI limits</div>
+            <h3 className="text-2xl font-semibold text-slate-900 tracking-tight leading-none">{data.totalVolume.toFixed(1)} T</h3>
+            <div className="text-[11px] font-medium text-slate-500 mt-2">Across {data.lots} active lots</div>
           </div>
         </div>
 
         <div className="bg-white p-4 rounded-lg border border-slate-200 shadow-sm flex flex-col justify-between hover:border-slate-300 transition-colors cursor-default">
           <div className="flex items-center justify-between mb-3">
-            <span className="text-[11px] font-semibold text-slate-500 uppercase tracking-wider">System Latency</span>
+            <span className="text-[11px] font-semibold text-slate-500 uppercase tracking-wider">Global Shipments</span>
           </div>
           <div>
-            <h3 className="text-2xl font-semibold text-slate-900 tracking-tight leading-none">{telemetry.latency}ms</h3>
-            <div className="text-[11px] font-medium text-emerald-600 mt-2">PostgreSQL Partitioning Active</div>
+            <h3 className="text-2xl font-semibold text-slate-900 tracking-tight leading-none">{data.shipments}</h3>
+            <div className="text-[11px] font-medium text-emerald-600 mt-2">Real-time ocean transit</div>
           </div>
         </div>
 
         <div className="bg-white p-4 rounded-lg border border-slate-200 shadow-sm flex flex-col justify-between hover:border-slate-300 transition-colors cursor-default">
           <div className="flex items-center justify-between mb-3">
-            <span className="text-[11px] font-semibold text-slate-500 uppercase tracking-wider">Est. Enterprise ACV</span>
+            <span className="text-[11px] font-semibold text-slate-500 uppercase tracking-wider">Network Effect</span>
           </div>
           <div>
-            <h3 className="text-2xl font-semibold text-slate-900 tracking-tight leading-none">$11k</h3>
-            <div className="text-[11px] font-medium text-slate-500 mt-2">Per Exporter Account</div>
+            <h3 className="text-2xl font-semibold text-slate-900 tracking-tight leading-none">{data.farms + data.buyers}</h3>
+            <div className="text-[11px] font-medium text-slate-500 mt-2">Total Supply Chain Nodes</div>
           </div>
         </div>
       </div>
+      )}
 
       {/* Main Charts Row */}
       <div className="grid grid-cols-1 lg:grid-cols-2 gap-6 mb-6">

@@ -119,6 +119,32 @@ def register_user(request: Request, user: schemas.UserCreate, db: Session = Depe
 def read_users_me(current_user: models.User = Depends(get_current_user)):
     return {"id": current_user.id, "email": current_user.email, "role": current_user.role, "full_name": current_user.full_name}
 
+class ProfileUpdate(BaseModel):
+    full_name: str | None = None
+    email: str | None = None
+    current_password: str | None = None
+    new_password: str | None = None
+
+@app.patch("/api/auth/update-profile")
+def update_profile(request: Request, update: ProfileUpdate, db: Session = Depends(get_db), current_user: models.User = Depends(get_current_user)):
+    if update.full_name:
+        current_user.full_name = update.full_name
+    if update.email:
+        existing = db.query(models.User).filter(models.User.email == update.email, models.User.id != current_user.id).first()
+        if existing:
+            raise HTTPException(status_code=400, detail="Email already in use")
+        current_user.email = update.email
+    if update.new_password:
+        if not update.current_password:
+            raise HTTPException(status_code=400, detail="Current password required to set new password")
+        from .auth import verify_password
+        if not verify_password(update.current_password, current_user.hashed_password):
+            raise HTTPException(status_code=400, detail="Current password is incorrect")
+        current_user.hashed_password = get_password_hash(update.new_password)
+    db.commit()
+    db.refresh(current_user)
+    return {"id": current_user.id, "email": current_user.email, "role": current_user.role, "full_name": current_user.full_name}
+
 # --- Farm Routes ---
 @app.get("/api/farms", response_model=List[schemas.Farm])
 def get_farms(skip: int = 0, limit: int = 100, db: Session = Depends(get_db), current_user: models.User = Depends(get_current_user)):
@@ -136,6 +162,26 @@ def create_farm(farm: schemas.FarmCreate, db: Session = Depends(get_db), current
     db.refresh(new_farm)
     return new_farm
 
+@app.put("/api/farms/{farm_id}", response_model=schemas.Farm)
+def update_farm(farm_id: str, farm: schemas.FarmBase, db: Session = Depends(get_db), current_user: models.User = Depends(require_write_role)):
+    db_farm = db.query(models.Farm).filter(models.Farm.id == farm_id).first()
+    if not db_farm:
+        raise HTTPException(status_code=404, detail="Farm not found")
+    for key, value in farm.model_dump().items():
+        setattr(db_farm, key, value)
+    db.commit()
+    db.refresh(db_farm)
+    return db_farm
+
+@app.delete("/api/farms/{farm_id}")
+def delete_farm(farm_id: str, db: Session = Depends(get_db), current_user: models.User = Depends(require_write_role)):
+    db_farm = db.query(models.Farm).filter(models.Farm.id == farm_id).first()
+    if not db_farm:
+        raise HTTPException(status_code=404, detail="Farm not found")
+    db.delete(db_farm)
+    db.commit()
+    return {"message": f"Farm {farm_id} deleted"}
+
 # --- Buyer Routes ---
 @app.get("/api/buyers", response_model=List[schemas.Buyer])
 def get_buyers(skip: int = 0, limit: int = 100, db: Session = Depends(get_db), current_user: models.User = Depends(get_current_user)):
@@ -152,6 +198,26 @@ def create_buyer(buyer: schemas.BuyerCreate, db: Session = Depends(get_db), curr
     db.commit()
     db.refresh(new_buyer)
     return new_buyer
+
+@app.put("/api/buyers/{buyer_id}", response_model=schemas.Buyer)
+def update_buyer(buyer_id: str, buyer: schemas.BuyerBase, db: Session = Depends(get_db), current_user: models.User = Depends(require_write_role)):
+    db_buyer = db.query(models.Buyer).filter(models.Buyer.id == buyer_id).first()
+    if not db_buyer:
+        raise HTTPException(status_code=404, detail="Buyer not found")
+    for key, value in buyer.model_dump().items():
+        setattr(db_buyer, key, value)
+    db.commit()
+    db.refresh(db_buyer)
+    return db_buyer
+
+@app.delete("/api/buyers/{buyer_id}")
+def delete_buyer(buyer_id: str, db: Session = Depends(get_db), current_user: models.User = Depends(require_write_role)):
+    db_buyer = db.query(models.Buyer).filter(models.Buyer.id == buyer_id).first()
+    if not db_buyer:
+        raise HTTPException(status_code=404, detail="Buyer not found")
+    db.delete(db_buyer)
+    db.commit()
+    return {"message": f"Buyer {buyer_id} deleted"}
 
 # --- Shipment Routes ---
 @app.get("/api/shipments", response_model=List[schemas.Shipment])
@@ -194,6 +260,15 @@ def create_shipment(shipment: schemas.ShipmentCreate, db: Session = Depends(get_
     db.refresh(new_shipment)
     return new_shipment
 
+@app.delete("/api/shipments/{shipment_id}")
+def delete_shipment(shipment_id: str, db: Session = Depends(get_db), current_user: models.User = Depends(require_write_role)):
+    shipment = db.query(models.Shipment).filter(models.Shipment.id == shipment_id).first()
+    if not shipment:
+        raise HTTPException(status_code=404, detail="Shipment not found")
+    db.delete(shipment)
+    db.commit()
+    return {"message": f"Shipment {shipment_id} deleted"}
+
 # --- Harvest Lot Routes ---
 @app.get("/api/harvest-lots", response_model=List[schemas.HarvestLot])
 def get_harvest_lots(skip: int = 0, limit: int = 100, db: Session = Depends(get_db), current_user: models.User = Depends(get_current_user)):
@@ -210,6 +285,26 @@ def create_harvest_lot(lot: schemas.HarvestLotCreate, db: Session = Depends(get_
     db.commit()
     db.refresh(new_lot)
     return new_lot
+
+@app.put("/api/harvest-lots/{lot_id}", response_model=schemas.HarvestLot)
+def update_harvest_lot(lot_id: str, lot: schemas.HarvestLotBase, db: Session = Depends(get_db), current_user: models.User = Depends(require_write_role)):
+    db_lot = db.query(models.HarvestLot).filter(models.HarvestLot.id == lot_id).first()
+    if not db_lot:
+        raise HTTPException(status_code=404, detail="Lot not found")
+    for key, value in lot.model_dump().items():
+        setattr(db_lot, key, value)
+    db.commit()
+    db.refresh(db_lot)
+    return db_lot
+
+@app.delete("/api/harvest-lots/{lot_id}")
+def delete_harvest_lot(lot_id: str, db: Session = Depends(get_db), current_user: models.User = Depends(require_write_role)):
+    db_lot = db.query(models.HarvestLot).filter(models.HarvestLot.id == lot_id).first()
+    if not db_lot:
+        raise HTTPException(status_code=404, detail="Lot not found")
+    db.delete(db_lot)
+    db.commit()
+    return {"message": f"Lot {lot_id} deleted"}
 
 from pydantic import BaseModel
 class StatusUpdate(BaseModel):

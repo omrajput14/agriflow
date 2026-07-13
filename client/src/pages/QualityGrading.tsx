@@ -1,6 +1,7 @@
 import React, { useState, useEffect } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
-import { CheckCircle2, AlertCircle, ShieldCheck, Microscope, FileText, ChevronRight, XCircle, Search, Beaker, Apple } from 'lucide-react';
+import { CheckCircle2, AlertCircle, ShieldCheck, Microscope, FileText, ChevronRight, XCircle, Search, Beaker, Apple, Loader2 } from 'lucide-react';
+import { getHarvestLots } from '../services/api';
 
 // Mock MRL (Maximum Residue Limit) database in ppm (parts per million)
 const MRL_DB = {
@@ -30,11 +31,29 @@ const MOCK_LOTS = [
 ];
 
 export default function QualityGrading() {
-  const [selectedLot, setSelectedLot] = useState(MOCK_LOTS[0]);
+  const [lots, setLots] = useState<any[]>([]);
+  const [lotsLoading, setLotsLoading] = useState(true);
+  const [selectedLot, setSelectedLot] = useState<any>(null);
   const [destination, setDestination] = useState('EU');
   const [isApproving, setIsApproving] = useState(false);
   const [isApproved, setIsApproved] = useState(false);
   const [showModal, setShowModal] = useState(false);
+
+  useEffect(() => {
+    const fetchLots = async () => {
+      try {
+        const data = await getHarvestLots();
+        const mapped = data.map((l: any) => ({ id: l.id, crop: l.quality_grade || 'Produce', farm: l.farm_id, date: new Date().toISOString().split('T')[0] }));
+        setLots(mapped);
+        if (mapped.length > 0) setSelectedLot(mapped[0]);
+      } catch (err) {
+        console.error('Failed to load lots for QC', err);
+      } finally {
+        setLotsLoading(false);
+      }
+    };
+    fetchLots();
+  }, []);
 
   // Chemical Test Results state
   const [testResults, setTestResults] = useState({
@@ -124,12 +143,18 @@ export default function QualityGrading() {
                 <label className="block text-xs font-semibold text-slate-500 uppercase tracking-wider mb-1.5">Select Lot</label>
                 <select 
                   className="w-full border border-slate-300 rounded-md px-3 py-2 text-sm outline-none focus:border-blue-500 bg-slate-50"
-                  onChange={(e) => setSelectedLot(MOCK_LOTS.find(l => l.id === e.target.value) || MOCK_LOTS[0])}
-                  disabled={isApproved}
+                  onChange={(e) => setSelectedLot(lots.find(l => l.id === e.target.value) || lots[0])}
+                  disabled={isApproved || lotsLoading}
                 >
-                  {MOCK_LOTS.map(lot => (
-                    <option key={lot.id} value={lot.id}>{lot.id} — {lot.crop}</option>
-                  ))}
+                  {lotsLoading ? (
+                    <option>Loading lots...</option>
+                  ) : lots.length === 0 ? (
+                    <option>No lots available</option>
+                  ) : (
+                    lots.map(lot => (
+                      <option key={lot.id} value={lot.id}>{lot.id} — {lot.crop}</option>
+                    ))
+                  )}
                 </select>
               </div>
 
@@ -337,8 +362,8 @@ export default function QualityGrading() {
                 <div className="flex items-center justify-between border-b border-slate-100 pb-6">
                   <div>
                     <p className="text-sm text-slate-500 uppercase tracking-wider font-semibold mb-1">Lot Information</p>
-                    <p className="text-lg font-bold text-slate-900">{selectedLot.id} — {selectedLot.crop}</p>
-                    <p className="text-slate-600">{selectedLot.farm} | Date: {selectedLot.date}</p>
+                    <p className="text-lg font-bold text-slate-900">{selectedLot?.id} — {selectedLot?.crop}</p>
+                    <p className="text-slate-600">{selectedLot?.farm} | Date: {selectedLot?.date}</p>
                   </div>
                   <div className="text-right">
                     <p className="text-sm text-slate-500 uppercase tracking-wider font-semibold mb-1">Destination</p>

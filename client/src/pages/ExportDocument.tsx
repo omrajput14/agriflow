@@ -1,10 +1,29 @@
-import React from 'react';
+import React, { useEffect, useState } from 'react';
 import { motion } from 'framer-motion';
-import { Printer, ArrowLeft, Download } from 'lucide-react';
+import { Printer, ArrowLeft, Download, Loader2 } from 'lucide-react';
 import { useNavigate } from 'react-router-dom';
+import { getShipments, getBuyers } from '../services/api';
 
 export default function ExportDocument() {
   const navigate = useNavigate();
+  const [shipment, setShipment] = useState<any>(null);
+  const [buyer, setBuyer] = useState<any>(null);
+  const [loading, setLoading] = useState(true);
+
+  useEffect(() => {
+    const fetchData = async () => {
+      try {
+        const [shipments, buyers] = await Promise.all([getShipments(), getBuyers()]);
+        if (shipments.length > 0) setShipment(shipments[0]);
+        if (buyers.length > 0) setBuyer(buyers[0]);
+      } catch (err) {
+        console.error("Failed to load export doc data", err);
+      } finally {
+        setLoading(false);
+      }
+    };
+    fetchData();
+  }, []);
 
   const handlePrint = () => {
     window.print();
@@ -81,13 +100,18 @@ export default function ExportDocument() {
         <div className="grid grid-cols-2 gap-16 mb-12">
           <div>
             <h3 className="text-xs font-sans font-bold text-slate-400 uppercase tracking-widest border-b border-slate-200 pb-2 mb-4">Consignee (Bill To)</h3>
-            <p className="font-bold text-lg text-slate-900 mb-1">EuroFoods Inc.</p>
-            <div className="text-sm leading-relaxed text-slate-700">
-              <p>Attn: Procurement Division</p>
-              <p>Rotterdam Port Zone, Sector 4</p>
-              <p>3199 KV Maasvlakte Rotterdam</p>
-              <p>The Netherlands</p>
-            </div>
+            {loading ? (
+              <Loader2 size={16} className="animate-spin text-slate-400" />
+            ) : (
+              <>
+                <p className="font-bold text-lg text-slate-900 mb-1">{buyer?.company_name || 'EuroFoods Inc.'}</p>
+                <div className="text-sm leading-relaxed text-slate-700">
+                  <p>Attn: Procurement Division</p>
+                  <p>{buyer?.country || 'The Netherlands'}</p>
+                  <p>Contact: {buyer?.contact_email || 'info@buyer.com'}</p>
+                </div>
+              </>
+            )}
           </div>
           <div>
             <h3 className="text-xs font-sans font-bold text-slate-400 uppercase tracking-widest border-b border-slate-200 pb-2 mb-4">Shipping Details</h3>
@@ -95,19 +119,19 @@ export default function ExportDocument() {
               <tbody>
                 <tr>
                   <td className="py-1.5 font-semibold text-slate-600">Vessel:</td>
-                  <td className="py-1.5 font-medium text-slate-900">MSC Isabella (Voyage 88W)</td>
+                  <td className="py-1.5 font-medium text-slate-900">{shipment?.vessel_name || 'MSC Isabella (Voyage 88W)'}</td>
                 </tr>
                 <tr>
                   <td className="py-1.5 font-semibold text-slate-600">Port of Loading:</td>
-                  <td className="py-1.5 font-medium text-slate-900">Nhava Sheva, India</td>
+                  <td className="py-1.5 font-medium text-slate-900">{shipment?.origin_port || 'Nhava Sheva, India'}</td>
                 </tr>
                 <tr>
                   <td className="py-1.5 font-semibold text-slate-600">Port of Discharge:</td>
-                  <td className="py-1.5 font-medium text-slate-900">Rotterdam, Netherlands</td>
+                  <td className="py-1.5 font-medium text-slate-900">{shipment?.destination_port || 'Rotterdam, Netherlands'}</td>
                 </tr>
                 <tr>
-                  <td className="py-1.5 font-semibold text-slate-600">Container No:</td>
-                  <td className="py-1.5 font-mono text-slate-900">MSCU-8849204 (40' HC Reefer)</td>
+                  <td className="py-1.5 font-semibold text-slate-600">Status:</td>
+                  <td className="py-1.5 font-mono text-slate-900">{shipment?.status || 'In Transit'}</td>
                 </tr>
               </tbody>
             </table>

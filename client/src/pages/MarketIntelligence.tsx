@@ -2,6 +2,7 @@ import React, { useState } from 'react';
 import { motion } from 'framer-motion';
 import { TrendingUp, Globe, AlertTriangle, ChevronRight, Activity, DollarSign, Calculator, Zap, LineChart as ChartIcon } from 'lucide-react';
 import { LineChart, Line, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer, Area, ComposedChart } from 'recharts';
+import { useNavigate } from 'react-router-dom';
 
 const FORECAST_DATA = [
   { month: 'Jan', historical: 850, forecast: null, upper: null, lower: null },
@@ -25,6 +26,8 @@ export default function MarketIntelligence() {
   const [selectedCommodity, setSelectedCommodity] = useState('Cavendish Bananas');
   const [exchangeRate, setExchangeRate] = useState(83.45); // INR to USD example
   const [invoiceAmount, setInvoiceAmount] = useState(50000);
+  const [fxLocked, setFxLocked] = useState(false);
+  const navigate = useNavigate();
 
   return (
     <motion.div 
@@ -160,7 +163,7 @@ export default function MarketIntelligence() {
                   <div>
                     <h4 className="text-sm font-semibold text-slate-900">Export Opportunity: Bananas</h4>
                     <p className="text-xs text-slate-600 mt-1.5 leading-relaxed">Rotterdam spot prices are surging. You have <strong className="text-emerald-600">42 Tons</strong> in Cold Storage ready for dispatch.</p>
-                    <button className="mt-3 text-[11px] font-bold text-emerald-600 uppercase tracking-wider flex items-center gap-1 group-hover:gap-2 transition-all">
+                    <button onClick={() => navigate('/')} className="mt-3 text-[11px] font-bold text-emerald-600 uppercase tracking-wider flex items-center gap-1 group-hover:gap-2 transition-all">
                       Draft Shipment Now <ChevronRight size={14} />
                     </button>
                   </div>
@@ -228,8 +231,12 @@ export default function MarketIntelligence() {
                 </div>
               </div>
 
-              <button className="w-full mt-4 py-2.5 bg-slate-900 hover:bg-slate-800 text-white text-sm font-bold rounded-lg transition-colors active:scale-[0.99] shadow-sm">
-                Lock FX Rate Guarantee
+              <button 
+                onClick={() => { setFxLocked(true); setTimeout(() => setFxLocked(false), 3000); }}
+                disabled={fxLocked}
+                className={`w-full mt-4 py-2.5 text-white text-sm font-bold rounded-lg transition-colors active:scale-[0.99] shadow-sm ${fxLocked ? 'bg-emerald-600' : 'bg-slate-900 hover:bg-slate-800'}`}
+              >
+                {fxLocked ? '✓ FX Rate Locked!' : 'Lock FX Rate Guarantee'}
               </button>
             </div>
           </div>

@@ -15,6 +15,7 @@ import RouteOptimization from './pages/RouteOptimization';
 import InvestorDashboard from './pages/InvestorDashboard';
 import Login from './pages/Login';
 import Register from './pages/Register';
+import Settings from './pages/Settings';
 import { AuthProvider, useAuth } from './context/AuthContext';
 
 const ProtectedRoute = ({ children }: { children: React.ReactNode }) => {
@@ -53,6 +54,7 @@ function App() {
               <Route path="compliance" element={<QualityGrading />} />
               <Route path="route-optimizer" element={<RouteOptimization />} />
               <Route path="investor-kpi" element={<InvestorDashboard />} />
+              <Route path="settings" element={<Settings />} />
               <Route path="*" element={<Navigate to="/" replace />} />
             </Route>
           </Routes>

@@ -11,6 +11,7 @@ export default function Dashboard() {
   const navigate = useNavigate();
   const [isModalOpen, setIsModalOpen] = useState(false);
   const [isSubmitting, setIsSubmitting] = useState(false);
+  const [statusFilter, setStatusFilter] = useState<string | null>(null);
   const [buyers, setBuyers] = useState<any[]>([]);
   const [farms, setFarms] = useState<any[]>([]);
   const [lots, setLots] = useState<any[]>([]);
@@ -194,7 +195,7 @@ export default function Dashboard() {
           <div className="flex items-end gap-2">
             <h3 className="text-2xl font-semibold text-slate-900 tracking-tight leading-none">{farms.length}</h3>
             <span className="flex items-center text-[12px] font-medium text-emerald-600 mb-0.5">
-              <ArrowUpRight size={12} className="mr-0.5" /> 12%
+              <ArrowUpRight size={12} className="mr-0.5" /> {farms.length > 0 ? `${farms.length} active` : 'N/A'}
             </span>
           </div>
         </div>
@@ -209,7 +210,7 @@ export default function Dashboard() {
               {lots.reduce((acc, lot) => acc + lot.weight_tons, 0).toFixed(1)}<span className="text-sm font-medium text-slate-500 ml-1">T</span>
             </h3>
             <span className="flex items-center text-[12px] font-medium text-emerald-600 mb-0.5">
-              <ArrowUpRight size={12} className="mr-0.5" /> 4.2%
+              <ArrowUpRight size={12} className="mr-0.5" /> {lots.length} lots
             </span>
           </div>
         </div>
@@ -223,8 +224,8 @@ export default function Dashboard() {
             <h3 className="text-2xl font-semibold text-slate-900 tracking-tight leading-none">
               {Math.min(100, Math.round((lots.filter(l => l.status === 'Cold Storage').length / 50) * 100))}%
             </h3>
-            <span className="flex items-center text-[12px] font-medium text-red-600 mb-0.5">
-              <ArrowDownRight size={12} className="mr-0.5" /> 2.1%
+            <span className="flex items-center text-[12px] font-medium text-slate-500 mb-0.5">
+              {lots.filter(l => l.status === 'Cold Storage' || l.status === 'Storage').length} in storage
             </span>
           </div>
           <div className="w-full bg-slate-100 rounded-full h-1 mt-3">
@@ -256,7 +257,10 @@ export default function Dashboard() {
               <span className="px-2 py-0.5 rounded-full bg-slate-100 text-slate-500 text-[10px] font-semibold tracking-wide">{lots.length} TOTAL</span>
             </div>
             <div className="flex items-center gap-2">
-              <button className="p-1.5 text-slate-400 hover:text-slate-600 hover:bg-slate-100 rounded border border-transparent hover:border-slate-200 transition-all">
+              <button 
+                onClick={() => setStatusFilter(statusFilter ? null : 'filter')}
+                className={`p-1.5 rounded border transition-all ${statusFilter ? 'text-blue-600 bg-blue-50 border-blue-200' : 'text-slate-400 hover:text-slate-600 hover:bg-slate-100 border-transparent hover:border-slate-200'}`}
+              >
                 <Filter size={14} />
               </button>
               <button onClick={() => navigate('/packhouse')} className="text-[12px] text-white font-medium bg-slate-900 px-2.5 py-1.5 rounded hover:bg-slate-800 transition-colors shadow-sm">
@@ -264,7 +268,26 @@ export default function Dashboard() {
               </button>
             </div>
           </div>
-          
+          {/* Status Filter Row */}
+          {statusFilter && (
+            <div className="px-5 py-2 border-b border-slate-100 bg-slate-50/50 flex items-center gap-2 text-[11px]">
+              <span className="text-slate-500 font-medium">Filter:</span>
+              {['All', 'Intake', 'Quality', 'Packing', 'Storage'].map(s => (
+                <button
+                  key={s}
+                  onClick={() => setStatusFilter(s === 'All' ? 'filter' : s)}
+                  className={`px-2 py-0.5 rounded-full font-medium transition-colors ${
+                    (s === 'All' && statusFilter === 'filter') || statusFilter === s
+                      ? 'bg-blue-600 text-white'
+                      : 'bg-white border border-slate-200 text-slate-600 hover:border-slate-300'
+                  }`}
+                >
+                  {s}
+                </button>
+              ))}
+            </div>
+          )}
+
           {/* Table Container */}
           <div className="flex-1 overflow-auto">
             <table className="w-full text-[13px] text-left border-collapse">
@@ -279,7 +302,9 @@ export default function Dashboard() {
                 </tr>
               </thead>
               <tbody className="divide-y divide-slate-100">
-                {lots.map(lot => {
+                {lots
+                  .filter(lot => !statusFilter || statusFilter === 'filter' || lot.status === statusFilter)
+                  .map(lot => {
                   let badgeColor = 'bg-slate-50 text-slate-700 border-slate-200/60';
                   if (lot.quality_grade === 'Grade A') badgeColor = 'bg-emerald-50 text-emerald-700 border-emerald-200/60';
                   else if (lot.quality_grade === 'Grade B') badgeColor = 'bg-blue-50 text-blue-700 border-blue-200/60';
@@ -310,7 +335,7 @@ export default function Dashboard() {
           </div>
           
           <div className="px-5 py-2.5 border-t border-slate-200 bg-slate-50 flex items-center justify-center shrink-0">
-            <button className="text-[12px] font-medium text-slate-500 hover:text-slate-900 transition-colors">View all 24 lots</button>
+            <button onClick={() => navigate('/packhouse')} className="text-[12px] font-medium text-slate-500 hover:text-slate-900 transition-colors">View all {lots.length} lots</button>
           </div>
         </div>
         

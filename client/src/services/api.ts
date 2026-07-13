@@ -73,71 +73,77 @@ export const getMe = async () => {
   }
 };
 
-// --- Mock Data Fallbacks ---
-const MOCK_FARMS = [
-  { id: 'FRM-001', name: 'Green Valley', owner: 'Mock User', location: 'California, USA', crop_type: 'Bananas', area_acres: 120, expected_yield_tons: 450, status: 'Harvesting' },
-  { id: 'FRM-002', name: 'Sunrise Orchards', owner: 'Alice Smith', location: 'Florida, USA', crop_type: 'Oranges', area_acres: 85, expected_yield_tons: 320, status: 'Growing' }
-];
-
-const MOCK_LOTS = [
-  { id: 'LOT-001', farm_id: 'FRM-001', weight_tons: 24.5, quality_grade: 'A', status: 'Intake' },
-  { id: 'LOT-002', farm_id: 'FRM-001', weight_tons: 18.2, quality_grade: 'B', status: 'Cold Storage' },
-  { id: 'LOT-003', farm_id: 'FRM-002', weight_tons: 42.0, quality_grade: 'A', status: 'Exporting' }
-];
-
-const MOCK_BUYERS = [
-  { id: 'BUY-001', name: 'Global Fresh Inc.', contact_person: 'John Doe', email: 'john@globalfresh.com', region: 'North America', status: 'Active' }
-];
-
-const MOCK_SHIPMENTS = [
-  { id: 'SHP-001', buyer_id: 'BUY-001', container_number: 'CON-889', status: 'In Transit', current_location: 'Mid-Atlantic', temperature_c: 1.8 }
-];
-
-// Falls back to mock data ONLY when the backend is unreachable (timeout / network).
-// Real HTTP errors (4xx / 5xx) propagate so the UI can show them.
-const fetchWithFallback = async (url: string, mockData: any) => {
-  const controller = new AbortController();
-  const timeoutId = setTimeout(() => controller.abort(), 30000); // 30s for Render cold start
-  try {
-    const response = await fetch(url, { headers: getAuthHeaders(), signal: controller.signal });
-    clearTimeout(timeoutId);
-    if (!response.ok) {
-      // Surface real server errors instead of masking them with mock data.
-      throw new Error(`API ${response.status} ${response.statusText}`);
-    }
-    return await response.json();
-  } catch (error: any) {
-    clearTimeout(timeoutId);
-    if (error?.name === 'AbortError') {
-      console.warn(`Backend timeout for ${url}. Using mock data for prototype demo.`);
-      return mockData;
-    }
-    // Re-throw real errors (auth, validation, server).
-    throw error;
+export const updateProfile = async (data: { full_name?: string; email?: string; current_password?: string; new_password?: string }) => {
+  const response = await fetch(`${API_URL}/auth/update-profile`, {
+    method: 'PATCH',
+    headers: getAuthHeaders(),
+    body: JSON.stringify(data)
+  });
+  if (!response.ok) {
+    const errorData = await response.json();
+    throw new Error(errorData.detail || 'Failed to update profile');
   }
+  return response.json();
 };
 
 // --- Buyers API ---
-export const getBuyers = () => fetchWithFallback(`${API_URL}/buyers`, MOCK_BUYERS);
+export const getBuyers = async () => {
+  const response = await fetch(`${API_URL}/buyers`, { headers: getAuthHeaders() });
+  if (!response.ok) throw new Error(`API ${response.status}`);
+  return response.json();
+};
 export const createBuyer = async (buyerData: any) => {
   const response = await fetch(`${API_URL}/buyers`, { method: 'POST', headers: getAuthHeaders(), body: JSON.stringify(buyerData) });
   if (!response.ok) throw new Error('Failed to create buyer');
   return response.json();
 };
+export const updateBuyer = async (id: string, buyerData: any) => {
+  const response = await fetch(`${API_URL}/buyers/${id}`, { method: 'PUT', headers: getAuthHeaders(), body: JSON.stringify(buyerData) });
+  if (!response.ok) throw new Error('Failed to update buyer');
+  return response.json();
+};
+export const deleteBuyer = async (id: string) => {
+  const response = await fetch(`${API_URL}/buyers/${id}`, { method: 'DELETE', headers: getAuthHeaders() });
+  if (!response.ok) throw new Error('Failed to delete buyer');
+  return response.json();
+};
 
 // --- Farms API ---
-export const getFarms = () => fetchWithFallback(`${API_URL}/farms`, MOCK_FARMS);
+export const getFarms = async () => {
+  const response = await fetch(`${API_URL}/farms`, { headers: getAuthHeaders() });
+  if (!response.ok) throw new Error(`API ${response.status}`);
+  return response.json();
+};
 export const createFarm = async (farmData: any) => {
   const response = await fetch(`${API_URL}/farms`, { method: 'POST', headers: getAuthHeaders(), body: JSON.stringify(farmData) });
   if (!response.ok) throw new Error('Failed to create farm');
   return response.json();
 };
+export const updateFarm = async (id: string, farmData: any) => {
+  const response = await fetch(`${API_URL}/farms/${id}`, { method: 'PUT', headers: getAuthHeaders(), body: JSON.stringify(farmData) });
+  if (!response.ok) throw new Error('Failed to update farm');
+  return response.json();
+};
+export const deleteFarm = async (id: string) => {
+  const response = await fetch(`${API_URL}/farms/${id}`, { method: 'DELETE', headers: getAuthHeaders() });
+  if (!response.ok) throw new Error('Failed to delete farm');
+  return response.json();
+};
 
 // --- Harvest Lots API ---
-export const getHarvestLots = () => fetchWithFallback(`${API_URL}/harvest-lots`, MOCK_LOTS);
+export const getHarvestLots = async () => {
+  const response = await fetch(`${API_URL}/harvest-lots`, { headers: getAuthHeaders() });
+  if (!response.ok) throw new Error(`API ${response.status}`);
+  return response.json();
+};
 export const createHarvestLot = async (lotData: any) => {
   const response = await fetch(`${API_URL}/harvest-lots`, { method: 'POST', headers: getAuthHeaders(), body: JSON.stringify(lotData) });
   if (!response.ok) throw new Error('Failed to create harvest lot');
+  return response.json();
+};
+export const updateHarvestLot = async (id: string, lotData: any) => {
+  const response = await fetch(`${API_URL}/harvest-lots/${id}`, { method: 'PUT', headers: getAuthHeaders(), body: JSON.stringify(lotData) });
+  if (!response.ok) throw new Error('Failed to update harvest lot');
   return response.json();
 };
 export const updateLotStatus = async (id: string, status: string) => {
@@ -145,9 +151,18 @@ export const updateLotStatus = async (id: string, status: string) => {
   if (!response.ok) throw new Error('Failed to update lot status');
   return response.json();
 };
+export const deleteHarvestLot = async (id: string) => {
+  const response = await fetch(`${API_URL}/harvest-lots/${id}`, { method: 'DELETE', headers: getAuthHeaders() });
+  if (!response.ok) throw new Error('Failed to delete harvest lot');
+  return response.json();
+};
 
 // --- Shipments API ---
-export const getShipments = () => fetchWithFallback(`${API_URL}/shipments`, MOCK_SHIPMENTS);
+export const getShipments = async () => {
+  const response = await fetch(`${API_URL}/shipments`, { headers: getAuthHeaders() });
+  if (!response.ok) throw new Error(`API ${response.status}`);
+  return response.json();
+};
 export const getShipmentTelemetry = async (id: string) => {
   const response = await fetch(`${API_URL}/shipments/${id}/telemetry`, { headers: getAuthHeaders() });
   if (!response.ok) throw new Error('Failed to fetch shipment');
@@ -161,5 +176,10 @@ export const advanceShipment = async (id: string) => {
 export const createShipment = async (shipmentData: any) => {
   const response = await fetch(`${API_URL}/shipments`, { method: 'POST', headers: getAuthHeaders(), body: JSON.stringify(shipmentData) });
   if (!response.ok) throw new Error('Failed to create shipment');
+  return response.json();
+};
+export const deleteShipment = async (id: string) => {
+  const response = await fetch(`${API_URL}/shipments/${id}`, { method: 'DELETE', headers: getAuthHeaders() });
+  if (!response.ok) throw new Error('Failed to delete shipment');
   return response.json();
 };

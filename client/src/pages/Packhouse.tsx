@@ -1,8 +1,8 @@
 import React, { useState, useEffect } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
-import { Search, Plus, Filter, MoreHorizontal, Clock, Thermometer, AlertCircle, X, Loader2 } from 'lucide-react';
+import { Search, Plus, Filter, MoreHorizontal, Clock, Thermometer, AlertCircle, X, Loader2, Trash2 } from 'lucide-react';
 import { useNavigate } from 'react-router-dom';
-import { getHarvestLots, createHarvestLot, getFarms, updateLotStatus } from '../services/api';
+import { getHarvestLots, createHarvestLot, getFarms, updateLotStatus, deleteHarvestLot } from '../services/api';
 import { useAuth } from '../context/AuthContext';
 
 const KANBAN_COLUMNS = [
@@ -21,6 +21,7 @@ export default function Packhouse() {
   const [isModalOpen, setIsModalOpen] = useState(false);
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [farms, setFarms] = useState<any[]>([]);
+  const [openMenuId, setOpenMenuId] = useState<string | null>(null);
 
   // Form State
   const [formData, setFormData] = useState({
@@ -199,9 +200,35 @@ export default function Packhouse() {
                           <span className="font-mono text-[11px] font-bold text-slate-700 bg-slate-100 px-1.5 py-0.5 rounded border border-slate-200">{card.id}</span>
                           {getPriorityBadge(card.priority || 'Normal')}
                         </div>
-                        <button className="text-slate-300 hover:text-slate-600">
-                          <MoreHorizontal size={14} />
-                        </button>
+                        <div className="relative">
+                          <button 
+                            onClick={(e) => { e.stopPropagation(); setOpenMenuId(openMenuId === card.id ? null : card.id); }}
+                            className="text-slate-300 hover:text-slate-600"
+                          >
+                            <MoreHorizontal size={14} />
+                          </button>
+                          {openMenuId === card.id && (
+                            <div className="absolute right-0 top-full mt-1 bg-white border border-slate-200 rounded-lg shadow-xl z-50 w-36 overflow-hidden">
+                              <button
+                                onClick={async (e) => {
+                                  e.stopPropagation();
+                                  if (confirm(`Delete lot ${card.id}?`)) {
+                                    try {
+                                      await deleteHarvestLot(card.id);
+                                      setLots(prev => prev.filter(l => l.id !== card.id));
+                                    } catch (err) {
+                                      alert('Failed to delete lot');
+                                    }
+                                  }
+                                  setOpenMenuId(null);
+                                }}
+                                className="w-full px-3 py-2 text-left text-[12px] font-medium text-red-600 hover:bg-red-50 flex items-center gap-2 transition-colors"
+                              >
+                                <Trash2 size={12} /> Delete Lot
+                              </button>
+                            </div>
+                          )}
+                        </div>
                       </div>
                       
                       <p className="font-semibold text-slate-900 text-[13px] mb-0.5">Farm: {card.farm_id}</p>
