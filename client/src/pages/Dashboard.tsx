@@ -232,14 +232,14 @@ export default function Dashboard() {
           </div>
           <div className="flex items-end gap-2">
             <h3 className="text-2xl font-semibold text-slate-900 tracking-tight leading-none">
-              {Math.min(100, Math.round((lots.filter(l => l.status === 'Cold Storage').length / 50) * 100))}%
+              {Math.min(100, Math.round((lots.filter(l => l.status === 'Cold Storage' || l.status === 'Storage').length / 20) * 100))}%
             </h3>
             <span className="flex items-center text-[12px] font-medium text-slate-500 mb-0.5">
               {lots.filter(l => l.status === 'Cold Storage' || l.status === 'Storage').length} in storage
             </span>
           </div>
           <div className="w-full bg-slate-100 rounded-full h-1 mt-3">
-            <div className="bg-accent h-1 rounded-full" style={{ width: `${Math.min(100, Math.round((lots.filter(l => l.status === 'Cold Storage').length / 50) * 100))}%` }}></div>
+            <div className="bg-accent h-1 rounded-full" style={{ width: `${Math.min(100, Math.round((lots.filter(l => l.status === 'Cold Storage' || l.status === 'Storage').length / 20) * 100))}%` }}></div>
           </div>
         </div>
         

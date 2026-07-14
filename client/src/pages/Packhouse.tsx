@@ -154,11 +154,11 @@ export default function Packhouse() {
           </div>
           <div className="flex items-center gap-4 text-[13px] font-medium text-slate-600">
             <div className="flex items-center gap-1.5">
-              <span className="w-2 h-2 rounded-full bg-emerald-500"></span> Active Line: 85% Capacity
+              <span className={`w-2 h-2 rounded-full ${lots.length > 0 ? 'bg-emerald-500' : 'bg-slate-300'}`}></span> Active Line: {Math.min(100, Math.round((lots.length / 20) * 100))}% Capacity
             </div>
             <div className="w-px h-4 bg-slate-300"></div>
             <div className="flex items-center gap-1.5">
-              <span className="w-2 h-2 rounded-full bg-blue-500"></span> Chiller Temp: 2.4°C
+              <span className="w-2 h-2 rounded-full bg-blue-500"></span> Chiller Temp: {lots.filter(l => l.status === 'Cold Storage' || l.status === 'Storage').length > 0 ? '2.4°C' : 'Idle'}
             </div>
           </div>
         </div>
