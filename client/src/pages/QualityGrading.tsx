@@ -55,13 +55,31 @@ export default function QualityGrading() {
     fetchLots();
   }, []);
 
-  // Chemical Test Results state
+  // Chemical Test Results state — initialized with realistic simulated values
   const [testResults, setTestResults] = useState({
     'Chlorpyrifos': 0,
     'Carbendazim': 0,
     'Imidacloprid': 0,
     'Mancozeb': 0
   });
+
+  // Generate realistic simulated lab results when lot changes
+  useEffect(() => {
+    if (!selectedLot) return;
+    // Seed-based pseudorandom from lot ID for consistency
+    const seed = selectedLot.id.split('').reduce((acc: number, c: string) => acc + c.charCodeAt(0), 0);
+    const pseudo = (offset: number) => {
+      const x = Math.sin(seed + offset) * 10000;
+      return Math.abs(x - Math.floor(x));
+    };
+    setTestResults({
+      'Chlorpyrifos': parseFloat((pseudo(1) * 0.008).toFixed(4)),   // Typically very low, near EU limit of 0.01
+      'Carbendazim': parseFloat((pseudo(2) * 0.08).toFixed(3)),     // Up to 0.08 ppm
+      'Imidacloprid': parseFloat((pseudo(3) * 0.35).toFixed(3)),    // Up to 0.35 ppm
+      'Mancozeb': parseFloat((pseudo(4) * 1.5).toFixed(2)),         // Up to 1.5 ppm
+    });
+    setIsApproved(false);
+  }, [selectedLot?.id]);
 
   // Physical Grading state
   const [physicalGrades, setPhysicalGrades] = useState({

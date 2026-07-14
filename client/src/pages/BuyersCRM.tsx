@@ -1,7 +1,7 @@
 import React, { useState, useEffect } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
-import { Search, Plus, Filter, MoreHorizontal, Mail, Phone, MapPin, FileText, CheckCircle2, TrendingUp, Users, DollarSign, X, Loader2 } from 'lucide-react';
-import { getBuyers, createBuyer } from '../services/api';
+import { Search, Plus, Filter, MoreHorizontal, Mail, Phone, MapPin, FileText, CheckCircle2, TrendingUp, Users, DollarSign, X, Loader2, Trash2 } from 'lucide-react';
+import { getBuyers, createBuyer, deleteBuyer, getShipments } from '../services/api';
 
 export default function BuyersCRM() {
   const [buyers, setBuyers] = useState<any[]>([]);
@@ -10,6 +10,7 @@ export default function BuyersCRM() {
   const [selectedBuyer, setSelectedBuyer] = useState<string | null>(null);
   const [isModalOpen, setIsModalOpen] = useState(false);
   const [isSubmitting, setIsSubmitting] = useState(false);
+  const [shipments, setShipments] = useState<any[]>([]);
 
   // Form State
   const [formData, setFormData] = useState({
@@ -19,8 +20,9 @@ export default function BuyersCRM() {
   const loadBuyers = async () => {
     try {
       setLoading(true);
-      const data = await getBuyers();
+      const [data, shipmentsData] = await Promise.all([getBuyers(), getShipments()]);
       setBuyers(data);
+      setShipments(shipmentsData);
       if (data.length > 0 && !selectedBuyer) {
         setSelectedBuyer(data[0].id);
       }
@@ -101,8 +103,21 @@ export default function BuyersCRM() {
               <DollarSign size={18} />
             </div>
             <div>
-              <p className="text-[11px] font-semibold text-slate-500 uppercase tracking-wider">Export Rev (YTD)</p>
-              <p className="text-xl font-semibold text-slate-900 mt-0.5">$8.4M</p>
+              <p className="text-[11px] font-semibold text-slate-500 uppercase tracking-wider">Active Shipments</p>
+              <p className="text-xl font-semibold text-slate-900 mt-0.5">
+                {shipments.filter(s => s.status !== 'Delivered').length}
+              </p>
+            </div>
+          </div>
+          <div className="bg-white p-4 rounded-lg border border-slate-200 shadow-sm flex items-center gap-4">
+            <div className="w-10 h-10 rounded-full bg-amber-50 flex items-center justify-center text-amber-600 shrink-0">
+              <TrendingUp size={18} />
+            </div>
+            <div>
+              <p className="text-[11px] font-semibold text-slate-500 uppercase tracking-wider">Delivered</p>
+              <p className="text-xl font-semibold text-emerald-600 mt-0.5">
+                {shipments.filter(s => s.status === 'Delivered').length}
+              </p>
             </div>
           </div>
         </div>
@@ -144,6 +159,7 @@ export default function BuyersCRM() {
                     <th className="px-5 py-3">Contact Person</th>
                     <th className="px-5 py-3 text-center">Status</th>
                     <th className="px-5 py-3 text-right">LTV</th>
+                    <th className="px-5 py-3 text-right"></th>
                   </tr>
                 </thead>
                 <tbody className="divide-y divide-slate-100 text-[13px]">
@@ -151,7 +167,7 @@ export default function BuyersCRM() {
                     <tr 
                       key={buyer.id} 
                       onClick={() => setSelectedBuyer(buyer.id)}
-                      className={`transition-colors cursor-pointer ${selectedBuyer === buyer.id ? 'bg-emerald-50/50' : 'hover:bg-slate-50'}`}
+                      className={`transition-colors cursor-pointer group ${selectedBuyer === buyer.id ? 'bg-emerald-50/50' : 'hover:bg-slate-50'}`}
                     >
                       <td className="px-5 py-4">
                         <p className="font-semibold text-slate-900">{buyer.company_name}</p>
@@ -164,6 +180,25 @@ export default function BuyersCRM() {
                       </td>
                       <td className="px-5 py-4 text-center">{getStatusBadge(buyer.status)}</td>
                       <td className="px-5 py-4 text-right font-medium text-slate-700">{buyer.ltv}</td>
+                      <td className="px-5 py-4 text-right">
+                        <button
+                          onClick={async (e) => {
+                            e.stopPropagation();
+                            if (confirm(`Delete buyer ${buyer.company_name}?`)) {
+                              try {
+                                await deleteBuyer(buyer.id);
+                                await loadBuyers();
+                                if (selectedBuyer === buyer.id) setSelectedBuyer(null);
+                              } catch (err) {
+                                alert('Failed to delete buyer');
+                              }
+                            }
+                          }}
+                          className="text-slate-300 hover:text-red-500 transition-colors opacity-0 group-hover:opacity-100"
+                        >
+                          <Trash2 size={14} />
+                        </button>
+                      </td>
                     </tr>
                   ))}
                 </tbody>

@@ -163,7 +163,7 @@ export default function MarketIntelligence() {
                   <div>
                     <h4 className="text-sm font-semibold text-slate-900">Export Opportunity: Bananas</h4>
                     <p className="text-xs text-slate-600 mt-1.5 leading-relaxed">Rotterdam spot prices are surging. You have <strong className="text-emerald-600">42 Tons</strong> in Cold Storage ready for dispatch.</p>
-                    <button onClick={() => navigate('/')} className="mt-3 text-[11px] font-bold text-emerald-600 uppercase tracking-wider flex items-center gap-1 group-hover:gap-2 transition-all">
+                    <button onClick={() => navigate('/shipments')} className="mt-3 text-[11px] font-bold text-emerald-600 uppercase tracking-wider flex items-center gap-1 group-hover:gap-2 transition-all">
                       Draft Shipment Now <ChevronRight size={14} />
                     </button>
                   </div>

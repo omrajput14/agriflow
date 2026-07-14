@@ -51,9 +51,19 @@ export default function Dashboard() {
       alert("Please select a valid Buyer ID. If none exist, create a Buyer in the CRM first.");
       return;
     }
+    // Validate container number format (e.g., MSCU1234567, MSKU-1234567)
+    const containerPattern = /^[A-Z]{3,4}[-]?\d{5,9}$/;
+    if (!containerPattern.test(formData.container_number.toUpperCase().replace(/\s/g, ''))) {
+      alert("Container number must follow standard format: 3-4 letters + 5-9 digits (e.g., MSCU1234567 or MSKU-1234567)");
+      return;
+    }
     try {
       setIsSubmitting(true);
-      await createShipment(formData);
+      await createShipment({
+        ...formData,
+        container_number: formData.container_number.toUpperCase().replace(/\s/g, ''),
+        internal_temp: 2.1  // Default reefer temp for new shipments
+      });
       setIsModalOpen(false);
       setFormData({ id: '', buyer_id: '', container_number: '', status: 'Planned' });
       // Navigate to shipments to see the new tracker!
@@ -187,7 +197,7 @@ export default function Dashboard() {
       
       {/* KPI Cards */}
       <div className="grid grid-cols-1 md:grid-cols-4 gap-4 mb-6">
-        <div className="bg-white p-4 rounded-lg border border-slate-200 shadow-sm flex flex-col justify-between hover:border-slate-300 transition-colors cursor-default">
+        <div onClick={() => navigate('/farms')} className="bg-white p-4 rounded-lg border border-slate-200 shadow-sm flex flex-col justify-between hover:border-slate-300 transition-colors cursor-pointer hover:shadow-md">
           <div className="flex items-center justify-between mb-3">
             <span className="text-[11px] font-semibold text-slate-500 uppercase tracking-wider">Active Farms</span>
             <span className="p-1 bg-slate-50 rounded text-slate-400"><Tractor size={14} /></span>
@@ -200,7 +210,7 @@ export default function Dashboard() {
           </div>
         </div>
         
-        <div className="bg-white p-4 rounded-lg border border-slate-200 shadow-sm flex flex-col justify-between hover:border-slate-300 transition-colors cursor-default">
+        <div onClick={() => navigate('/packhouse')} className="bg-white p-4 rounded-lg border border-slate-200 shadow-sm flex flex-col justify-between hover:border-slate-300 transition-colors cursor-pointer hover:shadow-md">
           <div className="flex items-center justify-between mb-3">
             <span className="text-[11px] font-semibold text-slate-500 uppercase tracking-wider">Harvest Vol (YTD)</span>
             <span className="p-1 bg-slate-50 rounded text-slate-400"><Package size={14} /></span>
@@ -215,7 +225,7 @@ export default function Dashboard() {
           </div>
         </div>
         
-        <div className="bg-white p-4 rounded-lg border border-slate-200 shadow-sm flex flex-col justify-between hover:border-slate-300 transition-colors cursor-default">
+        <div onClick={() => navigate('/packhouse')} className="bg-white p-4 rounded-lg border border-slate-200 shadow-sm flex flex-col justify-between hover:border-slate-300 transition-colors cursor-pointer hover:shadow-md">
           <div className="flex items-center justify-between mb-3">
             <span className="text-[11px] font-semibold text-slate-500 uppercase tracking-wider">Storage Util.</span>
             <span className="p-1 bg-slate-50 rounded text-slate-400"><HardDrive size={14} /></span>
@@ -233,7 +243,7 @@ export default function Dashboard() {
           </div>
         </div>
         
-        <div className="bg-white p-4 rounded-lg border border-slate-200 shadow-sm flex flex-col justify-between hover:border-slate-300 transition-colors cursor-default relative overflow-hidden">
+        <div onClick={() => navigate('/shipments')} className="bg-white p-4 rounded-lg border border-slate-200 shadow-sm flex flex-col justify-between hover:border-slate-300 transition-colors cursor-pointer hover:shadow-md relative overflow-hidden">
           <div className="absolute top-0 right-0 w-16 h-16 bg-blue-600/5 rounded-bl-full -mr-4 -mt-4"></div>
           <div className="flex items-center justify-between mb-3 relative z-10">
             <span className="text-[11px] font-semibold text-slate-500 uppercase tracking-wider">Active Shipments</span>

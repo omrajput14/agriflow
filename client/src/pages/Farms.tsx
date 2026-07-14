@@ -1,7 +1,7 @@
 import React, { useState, useEffect } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
-import { Search, Plus, Filter, MoreHorizontal, MapPin, Sprout, Tractor, Leaf, X, Loader2 } from 'lucide-react';
-import { getFarms, createFarm } from '../services/api';
+import { Search, Plus, Filter, MoreHorizontal, MapPin, Sprout, Tractor, Leaf, X, Loader2, Trash2 } from 'lucide-react';
+import { getFarms, createFarm, deleteFarm } from '../services/api';
 import { useAuth } from '../context/AuthContext';
 
 export default function Farms() {
@@ -11,6 +11,7 @@ export default function Farms() {
   const [searchTerm, setSearchTerm] = useState('');
   const [isModalOpen, setIsModalOpen] = useState(false);
   const [isSubmitting, setIsSubmitting] = useState(false);
+  const [selectedFarmId, setSelectedFarmId] = useState<string | null>(null);
 
   // Form State
   const [formData, setFormData] = useState({
@@ -158,11 +159,16 @@ export default function Farms() {
                   <th className="px-6 py-3 text-right">Area</th>
                   <th className="px-6 py-3 text-right">Est. Yield</th>
                   <th className="px-6 py-3 text-center">Status</th>
+                  <th className="px-6 py-3 text-right"></th>
                 </tr>
               </thead>
               <tbody className="divide-y divide-slate-100 text-[13px]">
                 {farms.filter(f => f.name.toLowerCase().includes(searchTerm.toLowerCase()) || f.id.toLowerCase().includes(searchTerm.toLowerCase()) || f.owner.toLowerCase().includes(searchTerm.toLowerCase())).map((farm) => (
-                  <tr key={farm.id} className="hover:bg-slate-50/50 transition-colors group cursor-pointer">
+                  <tr 
+                    key={farm.id} 
+                    onClick={() => setSelectedFarmId(farm.id)}
+                    className={`transition-colors group cursor-pointer ${selectedFarmId === farm.id ? 'bg-emerald-50/50' : 'hover:bg-slate-50/50'}`}
+                  >
                     <td className="px-6 py-4">
                       <span className="font-mono text-[12px] font-medium text-slate-600 bg-slate-100 px-2 py-1 rounded border border-slate-200">{farm.id}</span>
                     </td>
@@ -183,6 +189,25 @@ export default function Farms() {
                     <td className="px-6 py-4 text-right font-medium text-slate-700">{farm.expected_yield_tons} T</td>
                     <td className="px-6 py-4 text-center">
                       {getStatusBadge(farm.status)}
+                    </td>
+                    <td className="px-6 py-4 text-right">
+                      <button
+                        onClick={async (e) => {
+                          e.stopPropagation();
+                          if (confirm(`Delete farm ${farm.id}?`)) {
+                            try {
+                              await deleteFarm(farm.id);
+                              await loadFarms();
+                              if (selectedFarmId === farm.id) setSelectedFarmId(null);
+                            } catch (err) {
+                              alert('Failed to delete farm');
+                            }
+                          }
+                        }}
+                        className="text-slate-300 hover:text-red-500 transition-colors opacity-0 group-hover:opacity-100"
+                      >
+                        <Trash2 size={14} />
+                      </button>
                     </td>
                   </tr>
                 ))}
