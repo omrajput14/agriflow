@@ -25,6 +25,7 @@
 <img src="https://img.shields.io/badge/postgresql-14+-4169E1.svg?style=for-the-badge&logo=postgresql&logoColor=white" alt="PostgreSQL" />
 <img src="https://img.shields.io/badge/three.js-r160-000000.svg?style=for-the-badge&logo=threedotjs&logoColor=white" alt="Three.js" />
 <img src="https://img.shields.io/badge/typescript-5.0-3178C6.svg?style=for-the-badge&logo=typescript&logoColor=white" alt="TypeScript" />
+<img src="https://img.shields.io/badge/security-hardened-critical.svg?style=for-the-badge" alt="Security" />
 <img src="https://img.shields.io/badge/license-MIT-green.svg?style=for-the-badge" alt="License" />
 
 <br />
@@ -36,7 +37,7 @@ that tracks produce from harvest through cold storage, ocean freight, and intern
 
 <br />
 
-[Features](#-key-features) · [Quick Start](#-quick-start) · [Architecture](#-system-architecture) · [Blueprint](#-product-blueprint) · [Security](#-security) · [Market](#-market-opportunity)
+[Features](#-key-features) · [Quick Start](#-quick-start) · [Architecture](#-system-architecture) · [Security](#-security-architecture) · [Blueprint](#-product-blueprint) · [Market](#-market-opportunity)
 
 <br />
 
@@ -54,25 +55,25 @@ that tracks produce from harvest through cold storage, ocean freight, and intern
 
 <h3>🚢 3D Supply Chain Visualizer</h3>
 <blockquote>
-Interactive <strong>React Three Fiber</strong> scene with custom 3D geometry — cargo ships that bob on waves, warehouses, reefer containers, and farm silos. Orbit controls, status-driven coloring, and floating data cards. This is the product differentiator no competitor has.
+Interactive <strong>React Three Fiber</strong> scene with custom 3D geometry — cargo ships, warehouses, reefer containers, and farm silos. Orbit controls, status-driven coloring, and floating data cards. Real shipment data from the API drives every visual element.
 </blockquote>
 
-<h3>📊 Investor KPI Dashboard</h3>
+<h3>📊 Command Center Dashboard</h3>
 <blockquote>
-TAM/SAM/SOM market sizing ($12.5B → $350M) visualized with Recharts bar charts. Strategic radar scorecard rated <strong>8.75/10</strong>. Competitive moat analysis cards. Live simulated API telemetry with rate-limit demonstration.
+Real-time KPI cards pulling live data from PostgreSQL — active farms, harvest lots, storage utilization, and shipment status. Every card is <strong>clickable</strong> and navigates to the relevant detail page. Numbers stay consistent across all views.
 </blockquote>
 
-<h3>🔐 Enterprise RBAC</h3>
+<h3>🔐 Hardened Authentication & RBAC</h3>
 <blockquote>
-Four roles — <strong>Admin, Farmer, Buyer, Operations</strong> — enforced at three layers: API middleware (FastAPI <code>Depends</code>), sidebar route filtering, and UI element gating. The "New Shipment" button is disabled with a tooltip for non-admin users, not a 403 surprise.
+Five roles — <strong>Admin, Operations, Farmer, Buyer, Exporter</strong> — enforced at three layers: API middleware (<code>Depends</code>), sidebar route filtering, and UI element gating. Server-assigned roles only (no client-side role selection). Admin-only user management panel. First-user bootstrap creates the initial Admin automatically.
 </blockquote>
 
 </td>
 <td width="50%" valign="top">
 
-<h3>🌡️ Cold Chain Monitoring</h3>
+<h3>🌡️ Cold Chain & Packhouse Operations</h3>
 <blockquote>
-Reefer temperature tracking across active shipments. The command center surfaces real alerts from in-transit containers — not hardcoded data. Below-threshold temperatures trigger a red critical alert; in-range temps show an amber advisory.
+Kanban-style lot pipeline (Intake → Quality → Packing → Storage) with real-time capacity metrics. Cold storage table view toggle. Chiller temperature monitoring. Storage utilization synced across Dashboard and Packhouse views.
 </blockquote>
 
 <h3>📋 Export Document Vault</h3>
@@ -82,7 +83,7 @@ Phytosanitary certificates, bills of lading, commercial invoices, and packing li
 
 <h3>🤖 AI-Powered Modules</h3>
 <blockquote>
-<strong>Quality Grading</strong> — AI defect detection with confidence scores and reject/accept logic.<br/>
+<strong>Quality Grading</strong> — MRL chemical testing with realistic simulated lab results per lot, pass/fail compliance against EU/US/JP limits.<br/>
 <strong>Route Optimization</strong> — Multi-modal transport planning with cost, time, and carbon analysis.<br/>
 <strong>Market Intelligence</strong> — Price trend forecasting with commodity-level breakdowns.
 </blockquote>
@@ -90,6 +91,28 @@ Phytosanitary certificates, bills of lading, commercial invoices, and packing li
 </td>
 </tr>
 </table>
+
+<br />
+
+### 📦 All 15 Modules
+
+| Module | Description |
+|:-------|:------------|
+| **Dashboard** | Command center with live KPI cards, harvest table, alerts |
+| **Farms** | Farm CRUD — name, location, crop type, expected yield |
+| **Packhouse** | Kanban pipeline, cold storage table, capacity monitoring |
+| **Shipments** | 3D supply chain visualizer + shipment tracking |
+| **Buyers CRM** | Buyer management, active shipment / delivery metrics |
+| **Quality Grading** | MRL chemical testing, physical grading, compliance |
+| **Route Optimizer** | AI rerouting engine, spoilage risk, alternative ports |
+| **Market Intel** | Commodity price trends, demand forecasting |
+| **Export Documents** | Certificate generation — phyto, B/L, invoices |
+| **Export Report** | Executive summary with aggregate metrics |
+| **Investor KPIs** | TAM/SAM/SOM, radar scorecard, competitive moats |
+| **Settings** | Profile management, password change with strength validation |
+| **Login** | JWT authentication with demo quick-access buttons |
+| **Register** | Secure registration with password strength meter |
+| **Admin Panel** | User listing + role management (Admin-only) |
 
 <br />
 
@@ -133,15 +156,21 @@ Phytosanitary certificates, bills of lading, commercial invoices, and packing li
 ```bash
 git clone https://github.com/omrajput14/agriflow.git
 cd agriflow/backend
+
+# Set up virtual environment
 python3 -m venv venv && source venv/bin/activate
 pip install -r requirements.txt
 
-# Generate a secret key and start the server
-export SECRET_KEY=$(python3 -c "import secrets; print(secrets.token_urlsafe(48))")
+# Configure secrets (NEVER commit .env)
+cp .env.example .env
+# Edit .env and set SECRET_KEY:
+#   python3 -c "import secrets; print(secrets.token_urlsafe(48))"
+
+# Start the API server
 uvicorn app.main:app --reload
 ```
 
-> ✅ API starts at **http://localhost:8000** — auto-creates tables and seeds 3 demo users on first boot.
+> ✅ API starts at **http://localhost:8000** — auto-creates tables on first boot.
 
 ### Step 2 — Frontend
 
@@ -153,22 +182,13 @@ npm run dev
 
 > ✅ Frontend starts at **http://localhost:5173**
 
-### Step 3 — Log in
+### Step 3 — Register & Log In
 
-Open the app and hit one of the **Quick Demo** buttons — no credentials to type:
+1. Go to `/register` — the **first user** automatically becomes **Admin**
+2. Subsequent registrations are assigned the `Pending` role
+3. Admin can promote users via `Settings → User Management`
 
-<table>
-<tr>
-<th align="center">🔴 Admin</th>
-<th align="center">🟢 Farmer</th>
-<th align="center">🔵 Buyer</th>
-</tr>
-<tr>
-<td align="center">All 12 modules<br/><sub>Farms, Packhouse, Shipments, Quality Control, Buyers CRM, Route Optimizer, Market Intel, Export Docs, Investor KPIs</sub></td>
-<td align="center">Farm operations<br/><sub>Harvest lots, farm data, simplified dashboard</sub></td>
-<td align="center">Trade view<br/><sub>Shipment tracking, delivery status</sub></td>
-</tr>
-</table>
+> ⚠️ **Passwords must be ≥ 10 characters** and pass server-side strength validation (common password rejection, email/name match check).
 
 <br />
 
@@ -180,19 +200,20 @@ Open the app and hit one of the **Quick Demo** buttons — no credentials to typ
 
 ```mermaid
 graph TB
-    subgraph Client ["🖥️ Frontend — React 18 + TypeScript"]
+    subgraph Client ["🖥️ Frontend — React 18 + TypeScript + Vite"]
         direction LR
-        UI[Vite Dev Server<br/>TailwindCSS] --> R3F[React Three Fiber<br/>3D Visualizer]
+        UI[React SPA<br/>TailwindCSS] --> R3F[React Three Fiber<br/>3D Visualizer]
         UI --> RC[Recharts<br/>Data Viz]
         UI --> FM[Framer Motion<br/>Animations]
-        UI --> AC[Auth Context<br/>JWT Storage]
+        UI --> AC[Auth Context<br/>JWT in Memory]
     end
 
-    subgraph Server ["⚡ Backend — FastAPI"]
+    subgraph Server ["⚡ Backend — FastAPI + Python"]
         direction LR
-        API[REST Endpoints] --> AUTH[JWT + bcrypt<br/>Auth Layer]
+        API[REST Endpoints<br/>13 resource routes] --> AUTH[JWT + bcrypt<br/>30-min tokens]
         API --> RBAC[Role-Based<br/>Middleware]
         API --> RL[SlowAPI<br/>Rate Limiter]
+        API --> SEC[Security Headers<br/>HSTS / CSP / XFO]
         AUTH --> ORM[SQLAlchemy 2.0<br/>ORM]
     end
 
@@ -200,7 +221,7 @@ graph TB
         DB[(PostgreSQL 14+)]
     end
 
-    AC -->|"Axios + Bearer Token"| API
+    AC -->|"fetch + Bearer Token"| API
     ORM --> DB
 
     style Client fill:#f0fdf4,stroke:#16a34a,stroke-width:2px,color:#000
@@ -212,12 +233,12 @@ graph TB
 
 ### 🔗 The Traceability Chain
 
-> Every piece of produce gets a cryptographic identity at harvest and carries it through the entire export pipeline.
+> Every piece of produce gets a unique identity at harvest and carries it through the entire export pipeline.
 
 ```mermaid
 graph LR
     F["🌾 Farm<br/><sub>Crop Growth</sub>"] -->|"Harvest Lot ID"| H["📦 Harvest Lot<br/><sub>Weight + Grade</sub>"]
-    H -->|"Inspection ID"| Q["✅ Quality Check<br/><sub>Grade A/B/C</sub>"]
+    H -->|"Inspection ID"| Q["✅ Quality Check<br/><sub>MRL + Physical</sub>"]
     Q -->|"Batch ID"| P["📋 Packing<br/><sub>Cold Storage</sub>"]
     P -->|"Container ID"| S["🚢 Shipment<br/><sub>Ocean Freight</sub>"]
     S -->|"B/L Number"| B["🌍 Buyer<br/><sub>Delivery + Receipt</sub>"]
@@ -232,7 +253,7 @@ graph LR
 
 <br />
 
-### 🗂️ Database Schema (Simplified ERD)
+### 🗂️ Database Schema
 
 ```mermaid
 erDiagram
@@ -247,9 +268,12 @@ erDiagram
     FARM {
         string id PK
         string name
+        string owner
         string location
-        float total_hectares
         string crop_type
+        float area_acres
+        float expected_yield_tons
+        string status
     }
 
     HARVEST_LOT {
@@ -258,15 +282,16 @@ erDiagram
         float weight_tons
         string quality_grade
         string status
-        date harvest_date
+        datetime logged_at
     }
 
     BUYER {
         string id PK
         string company_name
         string country
-        string contact_email
-        string tier
+        string contact_name
+        string email
+        string status
     }
 
     SHIPMENT {
@@ -275,12 +300,11 @@ erDiagram
         string container_number
         string status
         float internal_temp
-        date eta
+        datetime eta
     }
 
     FARM ||--o{ HARVEST_LOT : "produces"
     BUYER ||--o{ SHIPMENT : "receives"
-    HARVEST_LOT }o--|| SHIPMENT : "loaded into"
 ```
 
 <br />
@@ -289,54 +313,74 @@ erDiagram
 
 <br />
 
-## 📖 Product Blueprint
+## 🔒 Security Architecture
 
-<blockquote>
-Six documents. 74 pages of product strategy, UX specs, technical architecture, and investor analysis — all in this repo.
-</blockquote>
+AgriFlow implements defense-in-depth with hardened authentication at every layer.
+
+```mermaid
+graph TD
+    REQ[Incoming Request] --> RL{Rate Limiter<br/>SlowAPI}
+    RL -->|Pass| CORS{CORS Check<br/>Origin Whitelist}
+    RL -->|"429 Too Many"| BLOCK[Blocked]
+    CORS -->|Pass| SEC[Security Headers<br/>HSTS + CSP + XFO]
+    SEC --> AUTH{JWT Validation<br/>exp + iat + sig}
+    AUTH -->|Valid| RBAC{Role Check<br/>Admin / Ops / etc}
+    AUTH -->|"401 Unauthorized"| REJECT[Rejected]
+    RBAC -->|Authorized| HANDLER[Route Handler]
+    RBAC -->|"403 Forbidden"| REJECT
+
+    style REQ fill:#1e293b,stroke:#1e293b,color:#fff
+    style BLOCK fill:#dc2626,stroke:#dc2626,color:#fff
+    style REJECT fill:#dc2626,stroke:#dc2626,color:#fff
+    style HANDLER fill:#16a34a,stroke:#16a34a,color:#fff
+```
+
+<br />
 
 <table>
 <tr>
-<th align="center">#</th>
-<th>Document</th>
-<th>What's Inside</th>
-<th>For</th>
+<th width="180">Layer</th>
+<th>Implementation</th>
 </tr>
 <tr>
-<td align="center"><strong>01</strong></td>
-<td><a href="./01_product_strategy.md">📋 Product Strategy</a></td>
-<td>Market analysis, SWOT matrix, risk mitigation, pricing tiers, 3-year roadmap</td>
-<td><code>Founders</code> <code>PMs</code> <code>Investors</code></td>
+<td><strong>🔑 Authentication</strong></td>
+<td>JWT tokens with <strong>30-minute expiry</strong> + <code>iat</code> claim. bcrypt password hashing (cost factor 12). No plaintext credentials in UI, logs, or error messages.</td>
 </tr>
 <tr>
-<td align="center"><strong>02</strong></td>
-<td><a href="./02_user_journey_rbac.md">👤 User Journey & RBAC</a></td>
-<td>4-role permission matrix, information architecture, end-to-end user flows</td>
-<td><code>PMs</code> <code>UX Designers</code></td>
+<td><strong>🛡️ Authorization</strong></td>
+<td>Server-assigned roles only — registration always assigns <code>Pending</code> (first user auto-promoted to <code>Admin</code>). Admin-only <code>PATCH /api/admin/users/{id}/role</code> endpoint for role upgrades. Role whitelist validation via Pydantic.</td>
 </tr>
 <tr>
-<td align="center"><strong>03</strong></td>
-<td><a href="./03_design_system_ux.md">🎨 Design System & UX</a></td>
-<td>Typography, color palette, component library, 20+ screen specifications</td>
-<td><code>UI/UX</code> <code>Frontend</code></td>
+<td><strong>🔒 Password Policy</strong></td>
+<td>Minimum 10 characters. Rejects top-110 common passwords. Rejects email/name as password. Frontend strength meter (5-bar visual) with server-side re-validation.</td>
 </tr>
 <tr>
-<td align="center"><strong>04</strong></td>
-<td><a href="./04_technical_architecture.md">⚙️ Technical Architecture</a></td>
-<td>PostgreSQL DDL, database ERD, REST API spec, security model</td>
-<td><code>Architects</code> <code>Backend</code></td>
+<td><strong>⏱️ Rate Limiting</strong></td>
+<td>Login: <code>5 per 15 min</code>. Registration: <code>3 per hour</code>. Global API: <code>100/min</code>. IP-based keying via SlowAPI.</td>
 </tr>
 <tr>
-<td align="center"><strong>05</strong></td>
-<td><a href="./05_advanced_features_ai.md">🤖 Advanced Features & AI</a></td>
-<td>3D visualizer spec, notification engine, analytics, ML/AI roadmap</td>
-<td><code>ML/AI</code> <code>Graphics</code></td>
+<td><strong>🕵️ Anti-Enumeration</strong></td>
+<td>Login: <code>"Invalid email or password"</code> for both bad email and bad password. Registration: identical success response whether email exists or not.</td>
 </tr>
 <tr>
-<td align="center"><strong>06</strong></td>
-<td><a href="./06_investor_assessment.md">💰 Investor Assessment</a></td>
-<td>TAM/SAM/SOM ($12.5B → $350M), competitive moats, scorecard (8.75/10)</td>
-<td><code>Founders</code> <code>Investors</code></td>
+<td><strong>🔐 Secrets</strong></td>
+<td><code>SECRET_KEY</code> loaded from env vars. <code>.env</code> in both root and backend <code>.gitignore</code>. Template provided in <code>.env.example</code>.</td>
+</tr>
+<tr>
+<td><strong>🌐 CORS</strong></td>
+<td>Explicit origin whitelist only — no wildcard with credentials. No regex patterns.</td>
+</tr>
+<tr>
+<td><strong>📋 Security Headers</strong></td>
+<td><code>Strict-Transport-Security</code>, <code>X-Content-Type-Options: nosniff</code>, <code>X-Frame-Options: DENY</code>, <code>Content-Security-Policy</code>, <code>Referrer-Policy</code></td>
+</tr>
+<tr>
+<td><strong>✏️ Input Validation</strong></td>
+<td>Pydantic <code>EmailStr</code> for email format. Name fields: 2–100 chars, HTML tag rejection. Container numbers: regex format validation. All queries via SQLAlchemy ORM (no SQL injection).</td>
+</tr>
+<tr>
+<td><strong>📊 Audit Logging</strong></td>
+<td>Structured auth events: <code>AUTH_LOGIN_SUCCESS</code>, <code>AUTH_LOGIN_FAILED</code>, <code>AUTH_REGISTER_*</code>, <code>AUTH_ROLE_CHANGED</code>, <code>AUTH_PASSWORD_CHANGED</code> — with IP, user ID, timestamps. <strong>Never logs passwords or tokens.</strong></td>
 </tr>
 </table>
 
@@ -389,12 +433,13 @@ Six documents. 74 pages of product strategy, UX specs, technical architecture, a
 | **Charts** | Recharts | Market sizing, radar scorecard, KPI graphs |
 | **Animation** | Framer Motion | Page transitions, micro-interactions |
 | **Styling** | TailwindCSS | Utility-first design system |
-| **API Framework** | FastAPI 0.110 | Async REST endpoints, auto-docs |
+| **API Framework** | FastAPI 0.110 | Async REST endpoints, auto-docs at `/docs` |
 | **ORM** | SQLAlchemy 2.0, Alembic | Database models, migrations |
-| **Validation** | Pydantic v2 | Request/response schema enforcement |
-| **Auth** | python-jose (JWT), bcrypt | Token generation, password hashing |
-| **Rate Limiting** | SlowAPI | DDoS protection, login throttling |
-| **Database** | PostgreSQL 14+ | Relational data, partitioned telemetry |
+| **Validation** | Pydantic v2 + EmailStr | Request/response schema enforcement |
+| **Auth** | python-jose (JWT), bcrypt (cost 12) | 30-min token generation, password hashing |
+| **Rate Limiting** | SlowAPI | Brute-force protection, registration throttling |
+| **Security** | Custom middleware | HSTS, CSP, XFO, nosniff headers |
+| **Database** | PostgreSQL 14+ | Relational data with foreign key integrity |
 
 </details>
 
@@ -409,46 +454,51 @@ Six documents. 74 pages of product strategy, UX specs, technical architecture, a
 ```
 AgriFlow/
 │
-├── 📁 client/                           React frontend (Vite)
+├── 📁 client/                           React frontend (Vite + TypeScript)
 │   ├── 📁 src/
 │   │   ├── 📁 pages/
-│   │   │   ├── Dashboard.tsx            Command center — KPI cards, alerts, harvest table
+│   │   │   ├── Dashboard.tsx            Command center — live KPI cards, alerts, harvest table
 │   │   │   ├── ShipmentsTracker.tsx     ★ 3D supply chain visualizer (React Three Fiber)
-│   │   │   ├── Farms.tsx                Farm management — CRUD, location, crop types
-│   │   │   ├── Packhouse.tsx            Cold storage — lot registration, status pipeline
-│   │   │   ├── BuyersCRM.tsx            Buyer relationships — contracts, tiers
-│   │   │   ├── QualityGrading.tsx       AI quality inspection — defect scoring
-│   │   │   ├── RouteOptimization.tsx    AI route planner — cost, time, carbon
-│   │   │   ├── MarketIntelligence.tsx   Price trends — forecasting, commodity analysis
+│   │   │   ├── Farms.tsx                Farm CRUD — create, edit, delete with validation
+│   │   │   ├── Packhouse.tsx            Kanban pipeline + cold storage table toggle
+│   │   │   ├── BuyersCRM.tsx            Buyer management — shipment metrics, delete
+│   │   │   ├── QualityGrading.tsx       MRL chemical testing — simulated lab results per lot
+│   │   │   ├── RouteOptimization.tsx    AI route planner — cost, time, carbon analysis
+│   │   │   ├── MarketIntelligence.tsx   Price trends — forecasting, commodity breakdown
 │   │   │   ├── InvestorDashboard.tsx    KPI scorecard — TAM/SAM/SOM, radar chart
 │   │   │   ├── ExportDocument.tsx       Certificate generator — phyto, invoice, B/L
 │   │   │   ├── ExportReport.tsx         Executive summary — aggregate metrics
-│   │   │   └── Login.tsx                Auth — one-click demo buttons, no plaintext creds
+│   │   │   ├── Settings.tsx             Profile + password management
+│   │   │   ├── Login.tsx                JWT auth — demo quick-access buttons
+│   │   │   └── Register.tsx             Secure signup — strength meter, no role dropdown
 │   │   ├── 📁 components/
 │   │   │   ├── DashboardLayout.tsx      Sidebar nav, breadcrumbs, role-aware filtering
 │   │   │   └── FarmerDashboard.tsx      Farmer-specific simplified command center
 │   │   ├── 📁 context/
-│   │   │   └── AuthContext.tsx          JWT token management, auth state, logout
+│   │   │   └── AuthContext.tsx          JWT management, auth state, protected routes
 │   │   └── 📁 services/
-│   │       └── api.ts                   Axios HTTP client, interceptors, error handling
+│   │       └── api.ts                   HTTP client — typed endpoints, error handling
 │   └── package.json
 │
-├── 📁 backend/                          FastAPI backend
+├── 📁 backend/                          FastAPI backend (Python 3.9+)
 │   ├── 📁 app/
-│   │   ├── main.py                      Routes, RBAC guards, startup seeding
+│   │   ├── main.py                      Routes, RBAC guards, admin endpoints, security middleware
 │   │   ├── models.py                    SQLAlchemy ORM — User, Farm, HarvestLot, Shipment, Buyer
-│   │   ├── schemas.py                   Pydantic v2 — request/response validation
-│   │   ├── auth.py                      JWT creation, bcrypt hashing, token decode
+│   │   ├── schemas.py                   Pydantic v2 — input validation, EmailStr, role whitelist
+│   │   ├── auth.py                      JWT creation (30-min), bcrypt (cost 12), token decode
+│   │   ├── common_passwords.py          Top 110 common passwords for server-side rejection
 │   │   └── database.py                  PostgreSQL engine, session factory, connection pool
-│   ├── requirements.txt                 12 pinned dependencies
-│   └── .env.example                     Environment variable template
+│   ├── requirements.txt                 13 pinned dependencies
+│   ├── .env.example                     Environment variable template (SECRET_KEY, DATABASE_URL)
+│   └── .gitignore                       Excludes .env, venv, __pycache__
 │
-├── 01_product_strategy.md               Market analysis, SWOT, commercialization
-├── 02_user_journey_rbac.md              Role matrix, user flows
-├── 03_design_system_ux.md               Typography, colors, 20+ screen specs
-├── 04_technical_architecture.md         PostgreSQL DDL, API spec, security
-├── 05_advanced_features_ai.md           3D viz, notifications, ML roadmap
-├── 06_investor_assessment.md            TAM/SAM/SOM, scorecard (8.75/10)
+├── 📄 01_product_strategy.md            Market analysis, SWOT, commercialization
+├── 📄 02_user_journey_rbac.md           Role matrix, user flows
+├── 📄 03_design_system_ux.md            Typography, colors, 20+ screen specs
+├── 📄 04_technical_architecture.md      PostgreSQL DDL, API spec, security
+├── 📄 05_advanced_features_ai.md        3D viz, notifications, ML roadmap
+├── 📄 06_investor_assessment.md         TAM/SAM/SOM, scorecard (8.75/10)
+├── .gitignore                           Root-level — excludes .env globally
 └── README.md                            ← You are here
 ```
 
@@ -458,33 +508,92 @@ AgriFlow/
 
 <br />
 
-## 🔒 Security
+## 🔌 API Reference
+
+All endpoints require JWT authentication unless noted. Full interactive docs at `http://localhost:8000/docs`.
+
+### Auth Endpoints
+
+| Method | Endpoint | Auth | Rate Limit | Description |
+|:-------|:---------|:-----|:-----------|:------------|
+| `POST` | `/api/auth/register` | — | 3/hour | Create account (server assigns role) |
+| `POST` | `/api/auth/login` | — | 5/15min | Returns JWT access token |
+| `GET` | `/api/auth/me` | ✅ | — | Current user profile |
+| `PATCH` | `/api/auth/update-profile` | ✅ | — | Update name/email/password |
+
+### Admin Endpoints (Admin-only)
+
+| Method | Endpoint | Description |
+|:-------|:---------|:------------|
+| `GET` | `/api/admin/users` | List all users with roles |
+| `PATCH` | `/api/admin/users/{id}/role` | Change user role (validated whitelist) |
+
+### Resource Endpoints
+
+| Method | Endpoint | Auth | Description |
+|:-------|:---------|:-----|:------------|
+| `GET/POST` | `/api/farms` | ✅ | List / create farms |
+| `DELETE` | `/api/farms/{id}` | ✅ Admin/Ops | Delete a farm |
+| `GET/POST` | `/api/lots` | ✅ | List / create harvest lots |
+| `PATCH` | `/api/lots/{id}/status` | ✅ Admin/Ops | Update lot pipeline status |
+| `GET/POST` | `/api/buyers` | ✅ | List / create buyers |
+| `DELETE` | `/api/buyers/{id}` | ✅ Admin/Ops | Delete a buyer |
+| `GET/POST` | `/api/shipments` | ✅ | List / create shipments |
+
+<br />
+
+---
+
+<br />
+
+## 📖 Product Blueprint
+
+<blockquote>
+Six documents. 74 pages of product strategy, UX specs, technical architecture, and investor analysis — all in this repo.
+</blockquote>
 
 <table>
 <tr>
-<td width="40"><strong>🔑</strong></td>
-<td><strong>Authentication</strong></td>
-<td>JWT tokens (7-day expiry) + bcrypt password hashing. No plaintext credentials anywhere in the UI.</td>
+<th align="center">#</th>
+<th>Document</th>
+<th>What's Inside</th>
+<th>For</th>
 </tr>
 <tr>
-<td><strong>🛡️</strong></td>
-<td><strong>Authorization</strong></td>
-<td>Role-based access control enforced at API layer (<code>Depends(require_write_role)</code>), route layer (sidebar filtering), and UI layer (disabled buttons with tooltips).</td>
+<td align="center"><strong>01</strong></td>
+<td><a href="./01_product_strategy.md">📋 Product Strategy</a></td>
+<td>Market analysis, SWOT matrix, risk mitigation, pricing tiers, 3-year roadmap</td>
+<td><code>Founders</code> <code>PMs</code> <code>Investors</code></td>
 </tr>
 <tr>
-<td><strong>⏱️</strong></td>
-<td><strong>Rate Limiting</strong></td>
-<td>Login: <code>5 req/min</code>. Global API: <code>100 req/min</code>. Powered by SlowAPI.</td>
+<td align="center"><strong>02</strong></td>
+<td><a href="./02_user_journey_rbac.md">👤 User Journey & RBAC</a></td>
+<td>5-role permission matrix, information architecture, end-to-end user flows</td>
+<td><code>PMs</code> <code>UX Designers</code></td>
 </tr>
 <tr>
-<td><strong>🔐</strong></td>
-<td><strong>Secrets</strong></td>
-<td><code>SECRET_KEY</code> loaded from environment. <code>.env</code> is gitignored. Template provided in <code>.env.example</code>.</td>
+<td align="center"><strong>03</strong></td>
+<td><a href="./03_design_system_ux.md">🎨 Design System & UX</a></td>
+<td>Typography, color palette, component library, 20+ screen specifications</td>
+<td><code>UI/UX</code> <code>Frontend</code></td>
 </tr>
 <tr>
-<td><strong>🌐</strong></td>
-<td><strong>CORS</strong></td>
-<td>Whitelisted origins only: <code>localhost:5173</code>, <code>localhost:5174</code>, <code>localhost:3000</code>.</td>
+<td align="center"><strong>04</strong></td>
+<td><a href="./04_technical_architecture.md">⚙️ Technical Architecture</a></td>
+<td>PostgreSQL DDL, database ERD, REST API spec, security model</td>
+<td><code>Architects</code> <code>Backend</code></td>
+</tr>
+<tr>
+<td align="center"><strong>05</strong></td>
+<td><a href="./05_advanced_features_ai.md">🤖 Advanced Features & AI</a></td>
+<td>3D visualizer spec, notification engine, analytics, ML/AI roadmap</td>
+<td><code>ML/AI</code> <code>Graphics</code></td>
+</tr>
+<tr>
+<td align="center"><strong>06</strong></td>
+<td><a href="./06_investor_assessment.md">💰 Investor Assessment</a></td>
+<td>TAM/SAM/SOM ($12.5B → $350M), competitive moats, scorecard (8.75/10)</td>
+<td><code>Founders</code> <code>Investors</code></td>
 </tr>
 </table>
 
@@ -531,9 +640,27 @@ graph LR
 
 | Moat | Why It Matters |
 |:-----|:---------------|
-| **🔗 Traceability Chain** | End-to-end UUID binding from harvest lot → quality report → container → B/L. Exporters can defend against quality claims in minutes, not weeks. |
+| **🔗 Traceability Chain** | End-to-end ID binding from harvest lot → quality report → container → B/L. Exporters can defend against quality claims in minutes, not weeks. |
 | **📋 Built-in Compliance** | Destination-aware phytosanitary and MRL checkers flag non-compliant produce before it leaves the packing facility. |
 | **🚢 3D Buyer Portal** | Interactive transit visualization replaces dozens of static emails and WhatsApp messages with a live digital experience. |
+| **🔒 Enterprise Security** | Hardened auth with server-assigned roles, common password rejection, rate limiting, and structured audit logging — production-ready from day one. |
+
+<br />
+
+---
+
+<br />
+
+## 🗺️ Roadmap
+
+| Phase | Status | Features |
+|:------|:-------|:---------|
+| **v1.0 — Core Platform** | ✅ Complete | Farm CRUD, Packhouse Kanban, Shipment tracker, Buyers CRM, Export docs, Dashboard |
+| **v1.1 — Security Hardening** | ✅ Complete | RBAC overhaul, password policies, rate limiting, security headers, audit logging |
+| **v1.2 — Data Integrity** | ✅ Complete | Cross-page KPI consistency, container validation, realistic MRL testing |
+| **v2.0 — Session Management** | 🔜 Next | Refresh tokens (httpOnly cookies), token rotation, server-side revocation |
+| **v2.1 — Email Flows** | 📋 Planned | Email verification, password reset, notification engine |
+| **v3.0 — Advanced Security** | 📋 Planned | TOTP 2FA for Admin/Exporter, session device management, CAPTCHA on lockout |
 
 <br />
 

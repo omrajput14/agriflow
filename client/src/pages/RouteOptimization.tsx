@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import { motion } from 'framer-motion';
 import { Ship, MapPin, Navigation, AlertTriangle, ArrowRight, Zap, CheckCircle2, TrendingDown, Anchor, Clock } from 'lucide-react';
 
